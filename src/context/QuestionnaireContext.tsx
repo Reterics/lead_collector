@@ -1,6 +1,5 @@
-/* eslint-disable react-refresh/only-export-components */
-import React, {createContext, useContext, useMemo, useState} from 'react';
-import type { QuestionnaireSchema } from '../components/Questionnaire';
+import React, { createContext, useContext, useMemo, useState } from 'react';
+import type { QuestionnaireSchema } from '../pages/Questionnaire.tsx';
 
 export type QuestionnaireDef = QuestionnaireSchema & {
   id: string;
@@ -14,7 +13,9 @@ type QuestionnaireContextValue = {
   getById: (id: string) => QuestionnaireDef | undefined;
 };
 
-const QuestionnaireContext = createContext<QuestionnaireContextValue | undefined>(undefined);
+const QuestionnaireContext = createContext<
+  QuestionnaireContextValue | undefined
+>(undefined);
 
 // Example predefined questionnaires
 const PREDEFINED: QuestionnaireDef[] = [
@@ -24,8 +25,18 @@ const PREDEFINED: QuestionnaireDef[] = [
     description: 'Collects basic contact details and preferences.',
     questions: [
       { id: 'name', name: 'Name', type: 'text', description: 'Your full name' },
-      { id: 'email', name: 'Email', type: 'text', description: 'Contact email' },
-      { id: 'contact', name: 'Preferred contact', type: 'radio', options: ['Email', 'Phone'] },
+      {
+        id: 'email',
+        name: 'Email',
+        type: 'text',
+        description: 'Contact email',
+      },
+      {
+        id: 'contact',
+        name: 'Preferred contact',
+        type: 'radio',
+        options: ['Email', 'Phone'],
+      },
       { id: 'notes', name: 'Notes', type: 'textarea' },
     ],
   },
@@ -34,22 +45,37 @@ const PREDEFINED: QuestionnaireDef[] = [
     name: 'Website Feedback',
     description: 'Quick feedback about your experience on our site.',
     questions: [
-      { id: 'satisfaction', name: 'Satisfaction', type: 'dropdown', options: ['1', '2', '3', '4', '5'] },
-      { id: 'would_recommend', name: 'Would you recommend us?', type: 'radio', options: ['No', 'Yes'] },
+      {
+        id: 'satisfaction',
+        name: 'Satisfaction',
+        type: 'dropdown',
+        options: ['1', '2', '3', '4', '5'],
+      },
+      {
+        id: 'would_recommend',
+        name: 'Would you recommend us?',
+        type: 'radio',
+        options: ['No', 'Yes'],
+      },
       { id: 'details', name: 'Details', type: 'textarea' },
     ],
   },
 ];
 
-export const QuestionnaireProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
+export const QuestionnaireProvider: React.FC<React.PropsWithChildren> = ({
+  children,
+}) => {
   const [currentId, setCurrentId] = useState<string | null>(null);
 
-  const value = useMemo<QuestionnaireContextValue>(() => ({
-    questionnaires: PREDEFINED,
-    currentId,
-    selectById: setCurrentId,
-    getById: (id: string) => PREDEFINED.find(q => q.id === id),
-  }), [currentId]);
+  const value = useMemo<QuestionnaireContextValue>(
+    () => ({
+      questionnaires: PREDEFINED,
+      currentId,
+      selectById: setCurrentId,
+      getById: (id: string) => PREDEFINED.find((q) => q.id === id),
+    }),
+    [currentId],
+  );
 
   return (
     <QuestionnaireContext.Provider value={value}>
@@ -60,7 +86,10 @@ export const QuestionnaireProvider: React.FC<React.PropsWithChildren> = ({ child
 
 export function useQuestionnaireContext(): QuestionnaireContextValue {
   const ctx = useContext(QuestionnaireContext);
-  if (!ctx) throw new Error('useQuestionnaireContext must be used within QuestionnaireProvider');
+  if (!ctx)
+    throw new Error(
+      'useQuestionnaireContext must be used within QuestionnaireProvider',
+    );
   return ctx;
 }
 
@@ -72,4 +101,3 @@ export function useCurrentQuestionnaire() {
   const { currentId, getById } = useQuestionnaireContext();
   return currentId ? getById(currentId) : undefined;
 }
-

@@ -1,7 +1,4 @@
-import {
-  firebaseAuth,
-  firebaseAuthError,
-} from '../config.ts';
+import { firebaseAuth, firebaseAuthError } from '../config.ts';
 import React, { createContext, useEffect, useState } from 'react';
 import type {
   IAuth,
@@ -9,11 +6,7 @@ import type {
   UserFormValues,
 } from '../services/auth.ts';
 import { useNavigate } from 'react-router-dom';
-import {
-  SignIn,
-  SignOut,
-  SignUp,
-} from '../services/auth.ts';
+import { SignIn, SignOut, SignUp } from '../services/auth.ts';
 import type { User } from 'firebase/auth';
 import { onAuthStateChanged } from 'firebase/auth';
 import PageLoading from '../components/PageLoading.tsx';

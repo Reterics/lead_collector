@@ -1,7 +1,7 @@
 import logo from '../assets/react.svg';
 import { useContext, useState } from 'react';
 import AlertBox from './AlertBox.tsx';
-import {AuthContext} from "../context/AuthContext.tsx";
+import { AuthContext } from '../context/AuthContext.tsx';
 
 const SignInComponent = () => {
   const { SignIn, loading, error } = useContext(AuthContext);
@@ -45,9 +45,7 @@ const SignInComponent = () => {
               <span className="sr-only">{'Loading'}...</span>
             </div>
           ) : (
-            <div
-              className="space-y-4"
-            >
+            <div className="space-y-4">
               <div>
                 <label
                   htmlFor="email"
@@ -87,8 +85,8 @@ const SignInComponent = () => {
               <button
                 type="button"
                 onClick={(e) => {
-                    e.preventDefault()
-                    SignIn({ email, password });
+                  e.preventDefault();
+                  SignIn({ email, password });
                 }}
                 className="w-full text-white bg-gray-600 hover:bg-gray-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
               >

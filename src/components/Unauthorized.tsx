@@ -1,7 +1,7 @@
 import { useContext } from 'react';
 
 import ScreenMessage from './ScreenMessage.tsx';
-import {AuthContext} from "../context/AuthContext.tsx";
+import { AuthContext } from '../context/AuthContext.tsx';
 
 const UnauthorizedComponent = () => {
   const { SignOut } = useContext(AuthContext);

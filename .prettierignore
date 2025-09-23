@@ -1,0 +1,7 @@
+node_modules
+public
+dist
+coverage
+src/assets/*
+.next
+.turbo

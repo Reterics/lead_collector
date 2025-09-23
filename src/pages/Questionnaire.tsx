@@ -1,5 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import {createIssue, type IssueLocalResponse, type IssueSuccessResponse} from '../services/jira';
+import {
+  createIssue,
+  type IssueLocalResponse,
+  type IssueSuccessResponse,
+} from '../services/jira.ts';
 
 // Types matching the provided JSON format
 export type Question = {
@@ -38,7 +42,7 @@ function useVoiceRecorder() {
       mr.onstop = () => {
         const blob = new Blob(chunks, { type: 'audio/webm' });
         setAudioBlob(blob);
-        stream.getTracks().forEach(t => t.stop());
+        stream.getTracks().forEach((t) => t.stop());
       };
       mr.start();
       setRecording(true);
@@ -69,7 +73,8 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
     return s;
   }, [schema]);
 
-  const [values, setValues] = useState<Record<string, string | boolean>>(initialState);
+  const [values, setValues] =
+    useState<Record<string, string | boolean>>(initialState);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -97,23 +102,31 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
       const lines: string[] = [];
       for (const q of schema.questions) {
         const val = values[q.id];
-        lines.push(`- ${q.name}: ${Array.isArray(val) ? val.join(', ') : String(val)}`);
+        lines.push(
+          `- ${q.name}: ${Array.isArray(val) ? val.join(', ') : String(val)}`,
+        );
       }
       const description = lines.join('\n');
 
       // prepare attachments: include voice recording if available
       const attachments: File[] = [];
       if (voice.audioBlob) {
-        attachments.push(new File([voice.audioBlob], `recording-${Date.now()}.webm`, { type: voice.audioBlob.type || 'audio/webm' }));
+        attachments.push(
+          new File([voice.audioBlob], `recording-${Date.now()}.webm`, {
+            type: voice.audioBlob.type || 'audio/webm',
+          }),
+        );
       }
 
       const res = await createIssue({ summary, description }, attachments);
       if ((res as IssueSuccessResponse)?.id) {
-          setResult(`Created JIRA issue: ${(res as IssueSuccessResponse).key} (${(res as IssueSuccessResponse).self})`);
+        setResult(
+          `Created JIRA issue: ${(res as IssueSuccessResponse).key} (${(res as IssueSuccessResponse).self})`,
+        );
       } else if ((res as IssueLocalResponse).storedLocally) {
-          setResult('Submission stored locally (JIRA not configured).');
+        setResult('Submission stored locally (JIRA not configured).');
       } else {
-          setResult('Submission sent.');
+        setResult('Submission sent.');
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to submit';
@@ -130,13 +143,15 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
         <div key={q.id} className="question">
           <label className="question-label">
             <span>{q.name}</span>
-            {q.description && <small className="question-desc">{q.description}</small>}
+            {q.description && (
+              <small className="question-desc">{q.description}</small>
+            )}
           </label>
           <div className="question-input">
             {q.type === 'text' && (
               <input
                 type="text"
-                value={values[q.id] as string || ''}
+                value={(values[q.id] as string) || ''}
                 onChange={(e) => onChange(q.id, e.target.value)}
               />
             )}
@@ -145,18 +160,27 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
               <div className="textarea-with-voice">
                 <textarea
                   rows={4}
-                  value={values[q.id] as string || ''}
+                  value={(values[q.id] as string) || ''}
                   onChange={(e) => onChange(q.id, e.target.value)}
                 />
                 <div className="voice-controls">
                   {!voice.recording ? (
-                    <button type="button" onClick={voice.start}>🎙️ Start</button>
+                    <button type="button" onClick={voice.start}>
+                      🎙️ Start
+                    </button>
                   ) : (
-                    <button type="button" onClick={voice.stop}>⏹️ Stop</button>
+                    <button type="button" onClick={voice.stop}>
+                      ⏹️ Stop
+                    </button>
                   )}
-                  {voice.error && <small className="error">{voice.error}</small>}
+                  {voice.error && (
+                    <small className="error">{voice.error}</small>
+                  )}
                   {voice.audioBlob && (
-                    <audio controls src={URL.createObjectURL(voice.audioBlob)} />
+                    <audio
+                      controls
+                      src={URL.createObjectURL(voice.audioBlob)}
+                    />
                   )}
                 </div>
               </div>
@@ -187,10 +211,17 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
             )}
 
             {q.type === 'dropdown' && (
-              <select value={values[q.id] as string || ''} onChange={(e) => onChange(q.id, e.target.value)}>
-                <option value="" disabled>Select...</option>
+              <select
+                value={(values[q.id] as string) || ''}
+                onChange={(e) => onChange(q.id, e.target.value)}
+              >
+                <option value="" disabled>
+                  Select...
+                </option>
                 {q.options?.map((opt) => (
-                  <option key={opt} value={opt}>{opt}</option>
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
                 ))}
               </select>
             )}
@@ -199,7 +230,9 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
       ))}
 
       <div className="actions">
-        <button type="submit" disabled={submitting}>{submitting ? 'Sending...' : 'Send'}</button>
+        <button type="submit" disabled={submitting}>
+          {submitting ? 'Sending...' : 'Send'}
+        </button>
       </div>
 
       {error && <div className="error">{error}</div>}

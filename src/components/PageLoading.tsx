@@ -10,7 +10,7 @@ const PageLoading = () => {
           className="flex items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-white flex-col"
         >
           <img src={logo} className="h-40 mr-2" alt="Reterics logo" />
-            Lead Collector
+          Lead Collector
         </a>
 
         <LoadingIcon />
