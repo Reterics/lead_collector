@@ -73,6 +73,10 @@ Use .env (Vite) and web server environment for PHP.
 Frontend (Vite):
 - VITE_JIRA_PROJECT_KEY – Jira project key (e.g., ABC)
 - VITE_JIRA_ISSUE_TYPE – Optional issue type name (default: Task)
+- VITE_FIREBASE_API_KEY – Firebase Web API Key (optional)
+- VITE_FIREBASE_AUTH_DOMAIN – Firebase Auth domain (optional)
+- VITE_FIREBASE_PROJECT_ID – Firebase project id (optional)
+- VITE_FIREBASE_APP_ID – Firebase app id (optional)
 
 Backend (PHP) – set as web server environment variables used by public/auth.php:
 - JIRA_CLIENT_ID – Atlassian OAuth 2.0 client id
@@ -81,6 +85,18 @@ Backend (PHP) – set as web server environment variables used by public/auth.ph
 - JIRA_CLOUD_BASE_URL – Optional. If set, restricts to a single site (e.g., https://your-site.atlassian.net)
 
 See .env.example for a starting point for the frontend variables.
+
+### Firebase usage
+- If Firebase env vars are provided, the app will:
+  - Use Firestore collection "questionnaires" for listing questionnaires on the home page.
+  - Enable a simple Auth page at the route /login with Google sign-in/out.
+- Firestore document shape for questionnaires:
+  {
+    name: string,
+    description?: string,
+    questions: [{ id: string, name: string, type: 'text'|'textarea'|'checkbox'|'radio'|'dropdown', description?: string, options?: string[] }]
+  }
+- When Firebase is not configured or the collection is empty, the app falls back to built-in predefined questionnaires.
 
 ### Jira OAuth app setup
 1) Create a 3LO app in https://developer.atlassian.com/ (select Jira scope).
