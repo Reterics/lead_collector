@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { useContext, useMemo, useState } from 'react';
 import type { QuestionnaireSchema } from '../pages/Questionnaire.tsx';
+import { DBContext } from './DBContext';
+import type { ContextDataValueType } from '../services/firebase.tsx';
 
 export type QuestionnaireDef = QuestionnaireSchema & {
   id: string;
@@ -15,87 +17,33 @@ type QuestionnaireContextValue = {
   remove: (id: string) => void;
 };
 
-const QuestionnaireContext = createContext<
-  QuestionnaireContextValue | undefined
->(undefined);
-
-// Example predefined questionnaires
-const PREDEFINED: QuestionnaireDef[] = [
-  {
-    id: 'basic',
-    name: 'Basic Lead Form',
-    description: 'Collects basic contact details and preferences.',
-    questions: [
-      { id: 'name', name: 'Name', type: 'text', description: 'Your full name' },
-      {
-        id: 'email',
-        name: 'Email',
-        type: 'text',
-        description: 'Contact email',
-      },
-      {
-        id: 'contact',
-        name: 'Preferred contact',
-        type: 'radio',
-        options: ['Email', 'Phone'],
-      },
-      { id: 'notes', name: 'Notes', type: 'textarea' },
-    ],
-  },
-  {
-    id: 'feedback',
-    name: 'Website Feedback',
-    description: 'Quick feedback about your experience on our site.',
-    questions: [
-      {
-        id: 'satisfaction',
-        name: 'Satisfaction',
-        type: 'dropdown',
-        options: ['1', '2', '3', '4', '5'],
-      },
-      {
-        id: 'would_recommend',
-        name: 'Would you recommend us?',
-        type: 'radio',
-        options: ['No', 'Yes'],
-      },
-      { id: 'details', name: 'Details', type: 'textarea' },
-    ],
-  },
-];
-
-const STORAGE_KEY = 'lead_collector.questionnaires';
-
-export const QuestionnaireProvider: React.FC<React.PropsWithChildren> = ({
-  children,
-}) => {
+// Merged hook: relies solely on FirebaseProvider (DBContext)
+export function useQuestionnaireContext(): QuestionnaireContextValue {
+  const db = useContext(DBContext);
   const [currentId, setCurrentId] = useState<string | null>(null);
-  const [custom, setCustom] = useState<QuestionnaireDef[]>(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return [];
-      const parsed = JSON.parse(raw) as QuestionnaireDef[];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(custom));
-    } catch {
-      // ignore storage errors
-    }
-  }, [custom]);
 
   const all = useMemo(() => {
-    // de-duplicate by id (custom overrides predefined)
+    const firebaseQuestionnaires = (db?.data?.questionnaires ?? []) as unknown[];
+    // Convert Firebase entries to QuestionnaireDef when shape matches
+    const fromDb: QuestionnaireDef[] = firebaseQuestionnaires
+      .map((raw) => {
+        const x = raw as Record<string, unknown>;
+        if (
+          typeof x.id === 'string' &&
+          typeof x.name === 'string' &&
+          Array.isArray(x.questions)
+        ) {
+          return x as unknown as QuestionnaireDef;
+        }
+        return null;
+      })
+      .filter(Boolean) as QuestionnaireDef[];
+
+    // de-duplicate by id (DB overrides predefined)
     const map = new Map<string, QuestionnaireDef>();
-    for (const q of PREDEFINED) map.set(q.id, q);
-    for (const q of custom) map.set(q.id, q);
+    for (const q of fromDb) map.set(q.id, q);
     return Array.from(map.values());
-  }, [custom]);
+  }, [db?.data?.questionnaires]);
 
   const value = useMemo<QuestionnaireContextValue>(
     () => ({
@@ -104,35 +52,27 @@ export const QuestionnaireProvider: React.FC<React.PropsWithChildren> = ({
       selectById: setCurrentId,
       getById: (id: string) => all.find((q) => q.id === id),
       upsert: (q: QuestionnaireDef) => {
-        setCustom((prev) => {
-          const idx = prev.findIndex((x) => x.id === q.id);
-          if (idx === -1) return [...prev, q];
-          const next = [...prev];
-          next[idx] = q;
-          return next;
-        });
+        // Fire-and-forget write to Firebase via DBContext
+        db?.setData('questionnaires', {
+          ...q,
+        } as unknown as ContextDataValueType).catch((e) =>
+          console.error('Failed to save questionnaire', e),
+        );
       },
       remove: (id: string) => {
-        setCustom((prev) => prev.filter((x) => x.id !== id));
+        db?.removeData('questionnaires', id).catch((e) =>
+          console.error('Failed to remove questionnaire', e),
+        );
       },
     }),
-    [all, currentId],
+    [all, currentId, db],
   );
 
-  return (
-    <QuestionnaireContext.Provider value={value}>
-      {children}
-    </QuestionnaireContext.Provider>
-  );
-};
+  if (!db) {
+    throw new Error('useQuestionnaireContext must be used within FirebaseProvider');
+  }
 
-export function useQuestionnaireContext(): QuestionnaireContextValue {
-  const ctx = useContext(QuestionnaireContext);
-  if (!ctx)
-    throw new Error(
-      'useQuestionnaireContext must be used within QuestionnaireProvider',
-    );
-  return ctx;
+  return value;
 }
 
 export function useQuestionnaires() {

@@ -5,7 +5,7 @@ import { firebaseCollections } from '../config.ts';
 const storageDBName = import.meta.env.VITE_INDEXED_DB || 'leadCollectorDB';
 
 export function openDatabase(
-  stores = Object.keys(firebaseCollections),
+  stores = [...Object.keys(firebaseCollections), 'deleted', 'ttl', 'mtime'],
 ): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(storageDBName, 6);

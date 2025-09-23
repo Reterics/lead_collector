@@ -106,7 +106,15 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
       user = users.find((user) => user.email === authContext.user?.email);
 
       if (!user) {
-        console.error('User is not found in the Firestore settings');
+        console.error('User is not found in the Firestore settings, set it to regular user');
+        user = {
+            id: authContext.user?.uid,
+            email: authContext.user?.email,
+            username: authContext.user?.email,
+            role: 'user',
+            password: undefined,
+            password_confirmation: undefined,
+        }
       } else if (user.role !== 'admin') {
         console.log('User is not an admin, hence we do not load settings');
         users = [user];

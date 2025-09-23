@@ -9,14 +9,12 @@ import {
 import Home from './pages/Home.tsx';
 import Questionnaire from './pages/Questionnaire.tsx';
 import QuestionnaireEditor from './pages/QuestionnaireEditor.tsx';
-import {
-  QuestionnaireProvider,
-  useQuestionnaireContext,
-} from './context/QuestionnaireContext';
+import { useQuestionnaireContext } from './context/QuestionnaireContext';
 import SignInComponent from './pages/SignIn.tsx';
 import AuthProvider, { AuthContext } from './context/AuthContext.tsx';
 import { useContext } from 'react';
 import PageLoading from './components/PageLoading.tsx';
+import { FirebaseProvider } from './services/firebase.tsx';
 
 function QuestionnaireRoute() {
   const { id } = useParams<{ id: string }>();
@@ -59,46 +57,45 @@ function AuthenticatedRoute({ children }: { children: React.ReactNode }) {
 
 function App() {
   return (
-    <QuestionnaireProvider>
-      <AuthProvider>
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <AuthenticatedRoute>
-                <Home />
-              </AuthenticatedRoute>
-            }
-          />
-          <Route path="/login" element={<SignInComponent />} />
-          <Route
-            path="/questionnaires/new"
-            element={
-              <AuthenticatedRoute>
-                <QuestionnaireEditor />
-              </AuthenticatedRoute>
-            }
-          />
-          <Route
-            path="/questionnaires/:id/edit"
-            element={
-              <AuthenticatedRoute>
-                <QuestionnaireEditor />
-              </AuthenticatedRoute>
-            }
-          />
-          <Route
-            path="/questionnaires/:id"
-            element={
-              <AuthenticatedRoute>
-                <QuestionnaireRoute />
-              </AuthenticatedRoute>
-            }
-          />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </AuthProvider>
-    </QuestionnaireProvider>
+    <AuthProvider>
+
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <AuthenticatedRoute>
+                    <FirebaseProvider><Home /></FirebaseProvider>
+                </AuthenticatedRoute>
+              }
+            />
+            <Route path="/login" element={<SignInComponent />} />
+            <Route
+              path="/questionnaires/new"
+              element={
+                <AuthenticatedRoute>
+                    <FirebaseProvider><QuestionnaireEditor /></FirebaseProvider>
+                </AuthenticatedRoute>
+              }
+            />
+            <Route
+              path="/questionnaires/:id/edit"
+              element={
+                <AuthenticatedRoute>
+                    <FirebaseProvider><QuestionnaireEditor /></FirebaseProvider>
+                </AuthenticatedRoute>
+              }
+            />
+            <Route
+              path="/questionnaires/:id"
+              element={
+                <AuthenticatedRoute>
+                    <FirebaseProvider><QuestionnaireRoute /></FirebaseProvider>
+                </AuthenticatedRoute>
+              }
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+    </AuthProvider>
   );
 }
 
