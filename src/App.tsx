@@ -1,21 +1,32 @@
 import './App.css'
-import Questionnaire, {type QuestionnaireSchema } from './components/Questionnaire'
+import Home from './components/Home'
+import Questionnaire from './components/Questionnaire'
+import { QuestionnaireProvider, useCurrentQuestionnaire } from './context/QuestionnaireContext'
 
-const sampleSchema: QuestionnaireSchema = {
-  name: 'Questionnaire',
-  questions: [
-    { id: '1', name: 'Név', type: 'text', description: 'Szöveges leírás' },
-    { id: '2', name: 'Éhes vagy?', type: 'radio', options: ['Nem', 'Igen'] },
-    { id: '3', name: 'Szeretnél sütit?', type: 'dropdown', options: ['Nem', 'Igen'] },
-    { id: '4', name: 'Vélemény', type: 'textarea' },
-  ],
+import { useQuestionnaireContext } from './context/QuestionnaireContext'
+
+function Inner() {
+  const current = useCurrentQuestionnaire();
+  const { selectById } = useQuestionnaireContext();
+  return (
+    <div style={{ maxWidth: 640, margin: '0 auto', padding: 16 }}>
+      {current ? (
+        <>
+          <button onClick={() => selectById(null)} style={{ marginBottom: 12 }}>&larr; Back</button>
+          <Questionnaire schema={current} />
+        </>
+      ) : (
+        <Home />
+      )}
+    </div>
+  );
 }
 
 function App() {
   return (
-    <div style={{ maxWidth: 640, margin: '0 auto', padding: 16 }}>
-      <Questionnaire schema={sampleSchema} />
-    </div>
+    <QuestionnaireProvider>
+      <Inner />
+    </QuestionnaireProvider>
   )
 }
 
