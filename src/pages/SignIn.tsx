@@ -1,6 +1,6 @@
 import logo from '../assets/react.svg';
 import { useContext, useState } from 'react';
-import AlertBox from './AlertBox.tsx';
+import AlertBox from '../components/AlertBox.tsx';
 import { AuthContext } from '../context/AuthContext.tsx';
 
 const SignInComponent = () => {

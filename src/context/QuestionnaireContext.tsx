@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { QuestionnaireSchema } from '../pages/Questionnaire.tsx';
 
 export type QuestionnaireDef = QuestionnaireSchema & {
@@ -11,6 +11,8 @@ type QuestionnaireContextValue = {
   currentId: string | null;
   selectById: (id: string | null) => void;
   getById: (id: string) => QuestionnaireDef | undefined;
+  upsert: (q: QuestionnaireDef) => void;
+  remove: (id: string) => void;
 };
 
 const QuestionnaireContext = createContext<
@@ -62,19 +64,59 @@ const PREDEFINED: QuestionnaireDef[] = [
   },
 ];
 
+const STORAGE_KEY = 'lead_collector.questionnaires';
+
 export const QuestionnaireProvider: React.FC<React.PropsWithChildren> = ({
   children,
 }) => {
   const [currentId, setCurrentId] = useState<string | null>(null);
+  const [custom, setCustom] = useState<QuestionnaireDef[]>(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw) as QuestionnaireDef[];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(custom));
+    } catch {
+      // ignore storage errors
+    }
+  }, [custom]);
+
+  const all = useMemo(() => {
+    // de-duplicate by id (custom overrides predefined)
+    const map = new Map<string, QuestionnaireDef>();
+    for (const q of PREDEFINED) map.set(q.id, q);
+    for (const q of custom) map.set(q.id, q);
+    return Array.from(map.values());
+  }, [custom]);
 
   const value = useMemo<QuestionnaireContextValue>(
     () => ({
-      questionnaires: PREDEFINED,
+      questionnaires: all,
       currentId,
       selectById: setCurrentId,
-      getById: (id: string) => PREDEFINED.find((q) => q.id === id),
+      getById: (id: string) => all.find((q) => q.id === id),
+      upsert: (q: QuestionnaireDef) => {
+        setCustom((prev) => {
+          const idx = prev.findIndex((x) => x.id === q.id);
+          if (idx === -1) return [...prev, q];
+          const next = [...prev];
+          next[idx] = q;
+          return next;
+        });
+      },
+      remove: (id: string) => {
+        setCustom((prev) => prev.filter((x) => x.id !== id));
+      },
     }),
-    [currentId],
+    [all, currentId],
   );
 
   return (

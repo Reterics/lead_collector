@@ -1,8 +1,0 @@
-/* Basic app styles and questionnaire import */
-@import './styles/questionnaire.css';
-
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-}

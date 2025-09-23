@@ -1,4 +1,3 @@
-import './App.css';
 import {
   Routes,
   Route,
@@ -7,13 +6,14 @@ import {
   Link,
   useNavigate,
 } from 'react-router-dom';
-import Home from './components/Home';
+import Home from './pages/Home.tsx';
 import Questionnaire from './pages/Questionnaire.tsx';
+import QuestionnaireEditor from './pages/QuestionnaireEditor.tsx';
 import {
   QuestionnaireProvider,
   useQuestionnaireContext,
 } from './context/QuestionnaireContext';
-import SignInComponent from './components/SignIn.tsx';
+import SignInComponent from './pages/SignIn.tsx';
 import AuthProvider, { AuthContext } from './context/AuthContext.tsx';
 import { useContext } from 'react';
 import PageLoading from './components/PageLoading.tsx';
@@ -26,28 +26,24 @@ function QuestionnaireRoute() {
   if (!id) return <Navigate to="/" replace />;
   if (!schema) {
     return (
-      <div style={{ maxWidth: 640, margin: '0 auto', padding: 16 }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <h2>Questionnaire not found</h2>
-          <Link to="/">&larr; Back</Link>
+      <section className="min-h-screen bg-gray-50 dark:bg-gray-900 py-6">
+        <div className="max-w-3xl mx-auto px-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Questionnaire not found</h2>
+            <Link to="/" className="text-blue-600 hover:underline">&larr; Back</Link>
+          </div>
+          <p className="text-gray-700 dark:text-gray-300">The requested questionnaire "{id}" does not exist.</p>
         </div>
-        <p>The requested questionnaire "{id}" does not exist.</p>
-      </div>
+      </section>
     );
   }
   return (
-    <div style={{ maxWidth: 640, margin: '0 auto', padding: 16 }}>
-      <button onClick={() => navigate(-1)} style={{ marginBottom: 12 }}>
-        &larr; Back
-      </button>
-      <Questionnaire schema={schema} />
-    </div>
+    <section className="min-h-screen bg-gray-50 dark:bg-gray-900 py-4">
+      <div className="max-w-3xl mx-auto px-4">
+        <button onClick={() => navigate(-1)} className="mb-3 text-blue-600 hover:underline">&larr; Back</button>
+        <Questionnaire schema={schema} />
+      </div>
+    </section>
   );
 }
 
@@ -75,6 +71,22 @@ function App() {
             }
           />
           <Route path="/login" element={<SignInComponent />} />
+          <Route
+            path="/questionnaires/new"
+            element={
+              <AuthenticatedRoute>
+                <QuestionnaireEditor />
+              </AuthenticatedRoute>
+            }
+          />
+          <Route
+            path="/questionnaires/:id/edit"
+            element={
+              <AuthenticatedRoute>
+                <QuestionnaireEditor />
+              </AuthenticatedRoute>
+            }
+          />
           <Route
             path="/questionnaires/:id"
             element={
