@@ -213,7 +213,7 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
         </div>
         <form onSubmit={onSubmit} className="space-y-5">
           {schema.questions.map((q) => (
-            <div key={q.id} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+            <div key={q.id} className="group relative overflow-hidden bg-gradient-to-br from-white to-slate-50 dark:from-gray-800 dark:to-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
               <label className="block mb-2">
                 <span className="block text-sm font-medium text-gray-900 dark:text-gray-100">{q.name}</span>
                 {q.description && (

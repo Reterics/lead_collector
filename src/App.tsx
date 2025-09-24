@@ -16,6 +16,8 @@ import AuthProvider, { AuthContext } from './context/AuthContext.tsx';
 import { useContext } from 'react';
 import PageLoading from './components/PageLoading.tsx';
 import { FirebaseProvider } from './services/firebase.tsx';
+import { ThemeProvider } from "./context/ThemeContext.tsx";
+import Footer from './components/Footer.tsx';
 
 function QuestionnaireRoute() {
   const { id } = useParams<{ id: string }>();
@@ -29,9 +31,11 @@ function QuestionnaireRoute() {
         <div className="max-w-3xl mx-auto px-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Questionnaire not found</h2>
-            <Link to="/" className="text-blue-600 hover:underline">&larr; Back</Link>
+            <div className="flex items-center gap-2">
+              <Link to="/" className="text-blue-600 hover:underline">&larr; Back</Link>
+            </div>
           </div>
-          <p className="text-gray-700 dark:text-gray-300">The requested questionnaire "{id}" does not exist.</p>
+          <p className="text-gray-700 dark:text-gray-300">The requested questionnaire \"{id}\" does not exist.</p>
         </div>
       </section>
     );
@@ -39,7 +43,9 @@ function QuestionnaireRoute() {
   return (
     <section className="min-h-screen bg-gray-50 dark:bg-gray-900 py-4">
       <div className="max-w-3xl mx-auto px-4">
-        <button onClick={() => navigate(-1)} className="mb-3 text-blue-600 hover:underline">&larr; Back</button>
+        <div className="flex items-center justify-between mb-3">
+          <button onClick={() => navigate(-1)} className="text-blue-600 hover:underline">&larr; Back</button>
+        </div>
         <Questionnaire schema={schema} />
       </div>
     </section>
@@ -59,7 +65,7 @@ function AuthenticatedRoute({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <AuthProvider>
-
+      <ThemeProvider>
           <Routes>
             <Route
               path="/"
@@ -104,6 +110,8 @@ function App() {
             />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          <Footer />
+        </ThemeProvider>
     </AuthProvider>
   );
 }

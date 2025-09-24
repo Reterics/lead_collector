@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import type { QuestionnaireSchema, Question } from './Questionnaire';
 import { useQuestionnaireContext } from '../context/QuestionnaireContext';
+import { FiChevronLeft, FiCopy, FiTrash2, FiPlus, FiSave } from 'react-icons/fi';
 
 function newBlankQuestion(): Question {
   return {
@@ -82,7 +83,12 @@ export default function QuestionnaireEditor() {
       <div className="max-w-3xl mx-auto px-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">{existing ? 'Edit' : 'Create'} Questionnaire</h2>
-          <Link to="/" className="text-blue-600 hover:underline">&larr; Back</Link>
+          <div className="flex items-center gap-2">
+            <Link to="/" className="inline-flex items-center gap-2 text-blue-600 hover:underline" title="Back">
+              <FiChevronLeft />
+              <span>Back</span>
+            </Link>
+          </div>
         </div>
 
         <div className="space-y-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
@@ -98,12 +104,18 @@ export default function QuestionnaireEditor() {
 
         <div className="mt-6 space-y-4">
           {questions.map((q, idx) => (
-            <div key={q.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+            <div key={q.id} className="group relative overflow-hidden bg-gradient-to-br from-white to-slate-50 dark:from-gray-800 dark:to-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Question {idx + 1}</h3>
                 <div className="flex gap-2">
-                  <button onClick={() => onDupe(q.id)} className="text-xs px-2 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200">Duplicate</button>
-                  <button onClick={() => onRemoveQuestion(q.id)} className="text-xs px-2 py-1 rounded bg-red-600 text-white">Remove</button>
+                  <button onClick={() => onDupe(q.id)} className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200" title="Duplicate">
+                    <FiCopy />
+                    <span className="hidden sm:inline">Duplicate</span>
+                  </button>
+                  <button onClick={() => onRemoveQuestion(q.id)} className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded bg-red-600 text-white" title="Remove">
+                    <FiTrash2 />
+                    <span className="hidden sm:inline">Remove</span>
+                  </button>
                 </div>
               </div>
 
@@ -133,13 +145,19 @@ export default function QuestionnaireEditor() {
                 <div className="mt-3">
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">Options</label>
-                    <button onClick={() => onAddOption(q.id)} className="text-xs px-2 py-1 rounded bg-blue-600 text-white">Add option</button>
+                    <button onClick={() => onAddOption(q.id)} className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded bg-blue-600 text-white" title="Add option">
+                      <FiPlus />
+                      <span className="hidden sm:inline">Add option</span>
+                    </button>
                   </div>
                   <div className="space-y-2">
                     {(q.options ?? []).map((opt, i) => (
                       <div key={i} className="flex gap-2">
                         <input value={opt} onChange={e => onChangeOption(q.id, i, e.target.value)} className="flex-1 rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-1.5" />
-                        <button onClick={() => onRemoveOption(q.id, i)} className="text-xs px-2 py-1 rounded bg-red-600 text-white">Remove</button>
+                        <button onClick={() => onRemoveOption(q.id, i)} className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded bg-red-600 text-white" title="Remove option">
+                          <FiTrash2 />
+                          <span className="hidden sm:inline">Remove</span>
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -150,8 +168,14 @@ export default function QuestionnaireEditor() {
         </div>
 
         <div className="mt-4 flex gap-2">
-          <button onClick={onAddQuestion} className="px-4 py-2 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white">Add question</button>
-          <button onClick={onSave} disabled={!canSave} className="px-4 py-2 rounded-md bg-emerald-600 text-white disabled:opacity-60">Save</button>
+          <button onClick={onAddQuestion} className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white" title="Add question">
+            <FiPlus />
+            <span>Add question</span>
+          </button>
+          <button onClick={onSave} disabled={!canSave} className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-emerald-600 text-white disabled:opacity-60" title="Save">
+            <FiSave />
+            <span>Save</span>
+          </button>
         </div>
 
         {error && <div className="mt-2 text-sm text-red-600">{error}</div>}

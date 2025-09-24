@@ -1,10 +1,13 @@
-import logo from '../assets/react.svg';
+import logo from '../assets/logo_dark.svg';
+import logoLight from '../assets/logo_light.svg';
 import { useContext, useState } from 'react';
 import AlertBox from '../components/AlertBox.tsx';
 import { AuthContext } from '../context/AuthContext.tsx';
+import {useTheme} from "../context/ThemeContext.tsx";
 
 const SignInComponent = () => {
   const { SignIn, loading, error } = useContext(AuthContext);
+  const theme = useTheme()?.theme
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -16,7 +19,7 @@ const SignInComponent = () => {
           href="?page=about"
           className="flex flex-col items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-white"
         >
-          <img src={logo} className="h-40" alt="Reterics logo" />
+          <img src={theme === 'dark' ? logo : logoLight} className="h-40" alt="Reterics logo" />
           Lead Collector
         </a>
         <div className="w-full bg-white rounded-lg shadow dark:border dark:bg-gray-800 dark:border-gray-700 p-6">
