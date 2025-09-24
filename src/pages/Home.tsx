@@ -3,21 +3,23 @@ import { useQuestionnaireContext } from '../context/QuestionnaireContext.tsx';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext.tsx';
 import { FiUpload, FiDownload, FiTrash2, FiEdit, FiLogOut, FiPlay } from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
 
 const Home: React.FC = () => {
   const { questionnaires, remove, getById, upsert } = useQuestionnaireContext();
   const navigate = useNavigate();
   const { SignOut } = useContext(AuthContext);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const { t } = useTranslation();
 
   const onDelete = (id: string) => {
     const q = getById(id);
     const isPredefined = !q || (q && (q.id === 'basic' || q.id === 'feedback'));
     if (isPredefined) {
-      alert('Predefined questionnaires cannot be deleted.');
+      alert(t('home.predefinedWarn'));
       return;
     }
-    if (confirm(`Delete "${q?.name ?? id}"? This cannot be undone for custom questionnaires.`)) {
+    if (confirm(t('home.confirmDelete', { name: q?.name ?? id }))) {
       remove(id);
     }
   };
@@ -45,8 +47,8 @@ const Home: React.FC = () => {
     try {
       const text = await file.text();
       const parsed = JSON.parse(text);
-      if (!parsed || typeof parsed !== 'object') throw new Error('Invalid JSON');
-      if (!parsed.name || !Array.isArray(parsed.questions)) throw new Error('Missing required fields: name, questions');
+      if (!parsed || typeof parsed !== 'object') throw new Error(t('home.invalidJson'));
+      if (!parsed.name || !Array.isArray(parsed.questions)) throw new Error(t('home.missingFields'));
       // Ensure id
       let id = parsed.id as unknown | undefined;
       if (!id || typeof id !== 'string') {
@@ -70,9 +72,9 @@ const Home: React.FC = () => {
       });
       const payload = { id: id as string, name: String(parsed.name), description: parsed.description ? String(parsed.description) : undefined, questions };
       upsert(payload);
-      alert(`Imported questionnaire: ${payload.name}`);
+      alert(t('home.imported', { name: payload.name }));
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to import file';
+      const msg = err instanceof Error ? err.message : t('home.failedImport');
       alert(msg);
     } finally {
       // reset input
@@ -84,27 +86,27 @@ const Home: React.FC = () => {
     <section className="min-h-screen bg-gray-50 dark:bg-gray-900 py-6">
       <div className="max-w-3xl mx-auto px-4">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Choose a questionnaire</h1>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">{t('home.choose')}</h1>
           <div className="flex items-center gap-2">
             <button
               onClick={() => SignOut()}
               className="inline-flex items-center gap-2 text-sm px-3 py-2 rounded-md bg-gray-600 text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-              title="Logout"
+              title={t('auth.logout')}
             >
               <FiLogOut />
-              <span className="hidden sm:inline">Logout</span>
+              <span className="hidden sm:inline">{t('auth.logout')}</span>
             </button>
           </div>
         </div>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Link to="/questionnaires/new" className="px-4 py-2 text-sm font-medium rounded-md bg-emerald-600 text-white hover:bg-emerald-700">+ New questionnaire</Link>
-            <Link to="/submissions" className="px-4 py-2 text-sm font-medium rounded-md bg-indigo-600 text-white hover:bg-indigo-700">Submissions</Link>
+            <Link to="/questionnaires/new" className="px-4 py-2 text-sm font-medium rounded-md bg-emerald-600 text-white hover:bg-emerald-700">{t('home.new')}</Link>
+            <Link to="/submissions" className="px-4 py-2 text-sm font-medium rounded-md bg-indigo-600 text-white hover:bg-indigo-700">{t('home.submissions')}</Link>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={triggerImport} className="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-md bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white" title="Import questionnaire JSON" aria-label="Import">
               <FiUpload />
-              <span className="hidden sm:inline">Import JSON</span>
+              <span className="hidden sm:inline">{t('home.importJson')}</span>
             </button>
             <input ref={fileInputRef} type="file" accept="application/json,.json" className="hidden" onChange={onImportFileChange} />
           </div>
@@ -123,30 +125,30 @@ const Home: React.FC = () => {
                 <button
                   onClick={() => navigate(`/questionnaires/${q.id}`)}
                   className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium cursor-pointer rounded-md bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  title="Start"
+                  title={t('home.start')}
                 >
                   <FiPlay />
-                  <span>Start</span>
+                  <span>{t('home.start')}</span>
                 </button>
                 <div className="inline-flex flex-1"></div>
                 <button
                   onClick={() => navigate(`/questionnaires/${q.id}/edit`)}
                   className="inline-flex items-center gap-2 px-4 py-3 text-sm font-medium cursor-pointer rounded-md bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
-                  title="Edit"
+                  title={t('home.edit')}
                 >
                   <FiEdit />
                 </button>
                 <button
                   onClick={() => onExport(q.id)}
                   className="inline-flex items-center gap-2 px-4 py-3 text-sm font-medium cursor-pointer rounded-md bg-amber-500 text-white hover:bg-amber-600"
-                  title="Export"
+                  title={t('home.export')}
                 >
                   <FiDownload />
                 </button>
                 <button
                   onClick={() => onDelete(q.id)}
                   className="inline-flex items-center gap-2 px-4 py-3 text-sm font-medium cursor-pointer rounded-md bg-red-600 text-white hover:bg-red-700"
-                  title="Delete"
+                  title={t('home.delete')}
                 >
                   <FiTrash2 />
                 </button>

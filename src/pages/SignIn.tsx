@@ -4,10 +4,12 @@ import { useContext, useState } from 'react';
 import AlertBox from '../components/AlertBox.tsx';
 import { AuthContext } from '../context/AuthContext.tsx';
 import {useTheme} from "../context/ThemeContext.tsx";
+import { useTranslation } from 'react-i18next';
 
 const SignInComponent = () => {
   const { SignIn, loading, error } = useContext(AuthContext);
   const theme = useTheme()?.theme
+  const { t } = useTranslation();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,13 +22,13 @@ const SignInComponent = () => {
           className="flex flex-col items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-white"
         >
           <img src={theme === 'dark' ? logo : logoLight} className="h-40" alt="Reterics logo" />
-          Lead Collector
+          {t('app.title')}
         </a>
         <div className="w-full bg-white rounded-lg shadow dark:border dark:bg-gray-800 dark:border-gray-700 p-6">
           <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white mb-4">
-            {'Sign in to your account'}
+            {t('auth.signInTitle')}
           </h1>
-          {error && <AlertBox title={'Error'} message={error} role="alert" />}
+          {error && <AlertBox title={t('auth.error')} message={error} role="alert" />}
 
           {loading ? (
             <div role="status" className="text-center">
@@ -45,7 +47,7 @@ const SignInComponent = () => {
                   fill="currentFill"
                 />
               </svg>
-              <span className="sr-only">{'Loading'}...</span>
+              <span className="sr-only">{t('auth.loading')}...</span>
             </div>
           ) : (
             <div className="space-y-4">
@@ -54,7 +56,7 @@ const SignInComponent = () => {
                   htmlFor="email"
                   className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                 >
-                  {'Your email'}
+                  {t('auth.emailLabel')}
                 </label>
                 <input
                   type="email"
@@ -72,7 +74,7 @@ const SignInComponent = () => {
                   htmlFor="password"
                   className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                 >
-                  {'Password'}
+                  {t('auth.passwordLabel')}
                 </label>
                 <input
                   type="password"
@@ -93,7 +95,7 @@ const SignInComponent = () => {
                 }}
                 className="w-full text-white bg-gray-600 hover:bg-gray-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
               >
-                {'Sign in'}
+                {t('auth.signIn')}
               </button>
             </div>
           )}

@@ -18,8 +18,10 @@ import PageLoading from './components/PageLoading.tsx';
 import { FirebaseProvider } from './services/firebase.tsx';
 import { ThemeProvider } from "./context/ThemeContext.tsx";
 import Footer from './components/Footer.tsx';
+import { useTranslation } from 'react-i18next';
 
 function QuestionnaireRoute() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const { getById } = useQuestionnaireContext();
   const navigate = useNavigate();
@@ -30,12 +32,12 @@ function QuestionnaireRoute() {
       <section className="min-h-screen bg-gray-50 dark:bg-gray-900 py-6">
         <div className="max-w-3xl mx-auto px-4">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Questionnaire not found</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t('app.notFound')}</h2>
             <div className="flex items-center gap-2">
-              <Link to="/" className="text-blue-600 hover:underline">&larr; Back</Link>
+              <Link to="/" className="text-blue-600 hover:underline">&larr; {t('app.back')}</Link>
             </div>
           </div>
-          <p className="text-gray-700 dark:text-gray-300">The requested questionnaire \"{id}\" does not exist.</p>
+          <p className="text-gray-700 dark:text-gray-300">{t('app.notFoundDesc', { id })}</p>
         </div>
       </section>
     );
@@ -44,7 +46,7 @@ function QuestionnaireRoute() {
     <section className="min-h-screen bg-gray-50 dark:bg-gray-900 py-4">
       <div className="max-w-3xl mx-auto px-4">
         <div className="flex items-center justify-between mb-3">
-          <button onClick={() => navigate(-1)} className="text-blue-600 hover:underline">&larr; Back</button>
+          <button onClick={() => navigate(-1)} className="text-blue-600 hover:underline">&larr; {t('app.back')}</button>
         </div>
         <Questionnaire schema={schema} />
       </div>

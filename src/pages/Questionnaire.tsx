@@ -7,6 +7,7 @@ import {
 } from '../services/jira.ts';
 import { saveSubmission } from '../utils/submissions.ts';
 import { firebaseModel } from '../config.ts';
+import { useTranslation } from 'react-i18next';
 
 // Types matching the provided JSON format
 export type Question = {
@@ -67,6 +68,7 @@ function useVoiceRecorder() {
 }
 
 export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
+  const { t } = useTranslation();
   const initialState = useMemo(() => {
     const s: Record<string, string | boolean> = {};
     for (const q of schema.questions) {
@@ -241,11 +243,11 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
                     <div className="flex items-center gap-2 mt-2">
                       {!voice.recording ? (
                         <button type="button" onClick={voice.start} className="px-3 py-1.5 text-sm rounded-md bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                          🎙️ Start
+                          🎙️ {t('questionnaire.start')}
                         </button>
                       ) : (
                         <button type="button" onClick={voice.stop} className="px-3 py-1.5 text-sm rounded-md bg-red-600 text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
-                          ⏹️ Stop
+                          ⏹️ {t('questionnaire.stop')}
                         </button>
                       )}
                       {voice.error && (
@@ -266,7 +268,7 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
                       onChange={(e) => onChange(q.id, e.target.checked)}
                       className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-200">Yes</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-200">{t('questionnaire.yes')}</span>
                   </label>
                 )}
 
@@ -294,7 +296,7 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
                     className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="" disabled>
-                      Select...
+                      {t('questionnaire.select')}
                     </option>
                     {q.options?.map((opt) => (
                       <option key={opt} value={opt}>
@@ -309,7 +311,7 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
 
           <div className="pt-2">
             <button type="submit" disabled={submitting} className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-              {submitting ? 'Sending...' : 'Send'}
+              {submitting ? t('questionnaire.sending') : t('questionnaire.send')}
             </button>
           </div>
 

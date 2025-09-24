@@ -1,0 +1,189 @@
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
+
+// Simple in-memory resources. You can later replace with JSON files per locale.
+export const resources = {
+  en: {
+    translation: {
+      app: {
+        title: 'Lead Collector',
+        back: 'Back',
+        notFound: 'Questionnaire not found',
+        notFoundDesc: 'The requested questionnaire "{{id}}" does not exist.'
+      },
+      auth: {
+        signInTitle: 'Sign in to your account',
+        error: 'Error',
+        loading: 'Loading',
+        emailLabel: 'Your email',
+        passwordLabel: 'Password',
+        signIn: 'Sign in',
+        logout: 'Logout'
+      },
+      home: {
+        choose: 'Choose a questionnaire',
+        new: '+ New questionnaire',
+        submissions: 'Submissions',
+        importJson: 'Import JSON',
+        start: 'Start',
+        edit: 'Edit',
+        export: 'Export',
+        delete: 'Delete',
+        predefinedWarn: 'Predefined questionnaires cannot be deleted.',
+        confirmDelete: 'Delete "{{name}}"? This cannot be undone for custom questionnaires.',
+        imported: 'Imported questionnaire: {{name}}',
+        invalidJson: 'Invalid JSON',
+        missingFields: 'Missing required fields: name, questions',
+        failedImport: 'Failed to import file'
+      },
+      editor: {
+        headingCreate: 'Create Questionnaire',
+        headingEdit: 'Edit Questionnaire',
+        name: 'Name',
+        description: 'Description',
+        question: 'Question {{index}}',
+        duplicate: 'Duplicate',
+        remove: 'Remove',
+        label: 'Label',
+        type: 'Type',
+        types: {
+          text: 'Text',
+          textarea: 'Textarea',
+          checkbox: 'Checkbox',
+          radio: 'Radio',
+          dropdown: 'Dropdown'
+        },
+        descriptionOptional: 'Description (optional)',
+        options: 'Options',
+        addOption: 'Add option',
+        removeOption: 'Remove',
+        addQuestion: 'Add question',
+        save: 'Save',
+        failedToSave: 'Failed to save'
+      },
+      questionnaire: {
+        yes: 'Yes',
+        select: 'Select...',
+        start: 'Start',
+        stop: 'Stop',
+        send: 'Send',
+        sending: 'Sending...'
+      },
+      submissions: {
+        title: 'Submissions',
+        back: 'Back',
+        refresh: 'Refresh',
+        empty: 'No submissions recorded yet.',
+        status: {
+          jira: 'JIRA created',
+          local: 'Stored locally',
+          auth: 'Auth required',
+          error: 'Error',
+          unknown: 'Unknown'
+        },
+        openInJira: 'Open in JIRA',
+        details: 'Details',
+        delete: 'Delete',
+        confirmDelete: 'Delete this submission record?'
+      }
+    }
+  },
+  hu: {
+    translation: {
+      app: {
+        title: 'Lead Gyűjtő',
+        back: 'Vissza',
+        notFound: 'Kérdőív nem található',
+        notFoundDesc: 'A kért kérdőív ("{{id}}") nem létezik.'
+      },
+      auth: {
+        signInTitle: 'Jelentkezzen be fiókjába',
+        error: 'Hiba',
+        loading: 'Betöltés',
+        emailLabel: 'E-mail címe',
+        passwordLabel: 'Jelszó',
+        signIn: 'Bejelentkezés',
+        logout: 'Kijelentkezés'
+      },
+      home: {
+        choose: 'Válasszon kérdőívet',
+        new: '+ Új kérdőív',
+        submissions: 'Beküldések',
+        importJson: 'JSON importálása',
+        start: 'Indítás',
+        edit: 'Szerkesztés',
+        export: 'Exportálás',
+        delete: 'Törlés',
+        predefinedWarn: 'Előre definiált kérdőíveket nem lehet törölni.',
+        confirmDelete: 'Törli: "{{name}}"? Egyedi kérdőívek esetén ez nem visszavonható.',
+        imported: 'Importált kérdőív: {{name}}',
+        invalidJson: 'Érvénytelen JSON',
+        missingFields: 'Hiányzó kötelező mezők: név, kérdések',
+        failedImport: 'A fájl importálása sikertelen'
+      },
+      editor: {
+        headingCreate: 'Kérdőív létrehozása',
+        headingEdit: 'Kérdőív szerkesztése',
+        name: 'Név',
+        description: 'Leírás',
+        question: 'Kérdés {{index}}',
+        duplicate: 'Duplikálás',
+        remove: 'Eltávolítás',
+        label: 'Címke',
+        type: 'Típus',
+        types: {
+          text: 'Szöveg',
+          textarea: 'Szövegterület',
+          checkbox: 'Jelölőnégyzet',
+          radio: 'Választógomb',
+          dropdown: 'Legördülő'
+        },
+        descriptionOptional: 'Leírás (opcionális)',
+        options: 'Opciók',
+        addOption: 'Opció hozzáadása',
+        removeOption: 'Eltávolítás',
+        addQuestion: 'Kérdés hozzáadása',
+        save: 'Mentés',
+        failedToSave: 'Mentés sikertelen'
+      },
+      questionnaire: {
+        yes: 'Igen',
+        select: 'Válasszon...',
+        start: 'Indítás',
+        stop: 'Leállítás',
+        send: 'Küldés',
+        sending: 'Küldés...'
+      },
+      submissions: {
+        title: 'Beküldések',
+        back: 'Vissza',
+        refresh: 'Frissítés',
+        empty: 'Még nincs rögzített beküldés.',
+        status: {
+          jira: 'JIRA létrehozva',
+          local: 'Helyben tárolva',
+          auth: 'Hitelesítés szükséges',
+          error: 'Hiba',
+          unknown: 'Ismeretlen'
+        },
+        openInJira: 'Megnyitás JIRA-ban',
+        details: 'Részletek',
+        delete: 'Törlés',
+        confirmDelete: 'Törli ezt a beküldési rekordot?'
+      }
+    }
+  }
+} as const;
+
+void i18n
+  .use(initReactI18next)
+  .init({
+    resources,
+    lng: 'en',
+    fallbackLng: 'en',
+    interpolation: {
+      escapeValue: false
+    }
+  });
+
+export default i18n;
