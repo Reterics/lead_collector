@@ -3,7 +3,10 @@ import {
   createIssue,
   type IssueLocalResponse,
   type IssueSuccessResponse,
+  type IssueRedirectResponse,
 } from '../services/jira.ts';
+import { saveSubmission } from '../utils/submissions.ts';
+import { firebaseModel } from '../config.ts';
 
 // Types matching the provided JSON format
 export type Question = {
@@ -119,18 +122,84 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
       }
 
       const res = await createIssue({ summary, description }, attachments);
+      // Determine status for submissions list
+      let status: 'jira' | 'local' | 'auth' | 'unknown' = 'unknown';
+      let issueKey: string | undefined;
+      let issueUrl: string | undefined;
       if ((res as IssueSuccessResponse)?.id) {
+        status = 'jira';
+        issueKey = (res as IssueSuccessResponse).key;
+        issueUrl = (res as IssueSuccessResponse).self;
         setResult(
           `Created JIRA issue: ${(res as IssueSuccessResponse).key} (${(res as IssueSuccessResponse).self})`,
         );
       } else if ((res as IssueLocalResponse).storedLocally) {
+        status = 'local';
         setResult('Submission stored locally (JIRA not configured).');
+      } else if ((res as IssueRedirectResponse)?.redirectingToAuth) {
+        status = 'auth';
+        setResult('Redirecting to JIRA authentication...');
       } else {
         setResult('Submission sent.');
+      }
+      const id = (typeof window !== 'undefined' && typeof window.crypto?.randomUUID === 'function')
+        ? window.crypto.randomUUID()
+        : `sub_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+
+      // Persist to Firestore regardless of JIRA outcome
+      try {
+        await firebaseModel.add(
+          {
+            createdAt: new Date().toISOString(),
+            questionnaireName: schema.name,
+            summary,
+            description,
+            status,
+            issueKey,
+            issueUrl,
+            values,
+            questions: schema.questions.map((q) => ({ id: q.id, name: q.name, type: q.type })),
+          },
+          'submissions',
+        );
+      } catch (e) {
+        console.error('Failed to write submission to Firestore', e);
+      }
+
+      // Keep local submissions list behavior
+      if (status !== 'local') {
+        saveSubmission({
+          id,
+          createdAt: new Date().toISOString(),
+          questionnaireName: schema.name,
+          summary,
+          description,
+          status,
+          issueKey,
+          issueUrl,
+        });
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to submit';
       setError(msg);
+      // Persist error submission to Firestore
+      try {
+        await firebaseModel.add(
+          {
+            createdAt: new Date().toISOString(),
+            questionnaireName: schema.name,
+            summary: `${schema.name} response - ${new Date().toLocaleString()}`,
+            description: Object.entries(values).map(([k,v]) => `${k}: ${String(v)}`).join('\n'),
+            status: 'error',
+            error: msg,
+            values,
+            questions: schema.questions.map((q) => ({ id: q.id, name: q.name, type: q.type })),
+          },
+          'submissions',
+        );
+      } catch (e) {
+        console.error('Failed to write error submission to Firestore', e);
+      }
     } finally {
       setSubmitting(false);
     }

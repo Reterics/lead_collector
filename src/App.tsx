@@ -9,6 +9,7 @@ import {
 import Home from './pages/Home.tsx';
 import Questionnaire from './pages/Questionnaire.tsx';
 import QuestionnaireEditor from './pages/QuestionnaireEditor.tsx';
+import SubmissionsList from './pages/SubmissionsList.tsx';
 import { useQuestionnaireContext } from './context/QuestionnaireContext';
 import SignInComponent from './pages/SignIn.tsx';
 import AuthProvider, { AuthContext } from './context/AuthContext.tsx';
@@ -90,6 +91,14 @@ function App() {
               element={
                 <AuthenticatedRoute>
                     <FirebaseProvider><QuestionnaireRoute /></FirebaseProvider>
+                </AuthenticatedRoute>
+              }
+            />
+            <Route
+              path="/submissions"
+              element={
+                <AuthenticatedRoute>
+                    <FirebaseProvider><SubmissionsList /></FirebaseProvider>
                 </AuthenticatedRoute>
               }
             />

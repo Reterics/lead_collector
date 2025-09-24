@@ -92,7 +92,10 @@ const Home: React.FC = () => {
           </button>
         </div>
         <div className="flex items-center justify-between mb-4">
-          <Link to="/questionnaires/new" className="px-4 py-2 text-sm font-medium rounded-md bg-emerald-600 text-white hover:bg-emerald-700">+ New questionnaire</Link>
+          <div className="flex items-center gap-2">
+            <Link to="/questionnaires/new" className="px-4 py-2 text-sm font-medium rounded-md bg-emerald-600 text-white hover:bg-emerald-700">+ New questionnaire</Link>
+            <Link to="/submissions" className="px-4 py-2 text-sm font-medium rounded-md bg-indigo-600 text-white hover:bg-indigo-700">Submissions</Link>
+          </div>
           <div className="flex items-center gap-2">
             <button onClick={triggerImport} className="px-3 py-2 text-sm rounded-md bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white">Import JSON</button>
             <input ref={fileInputRef} type="file" accept="application/json,.json" className="hidden" onChange={onImportFileChange} />
