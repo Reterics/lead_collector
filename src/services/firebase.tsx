@@ -106,15 +106,17 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
       user = users.find((user) => user.email === authContext.user?.email);
 
       if (!user) {
-        console.error('User is not found in the Firestore settings, set it to regular user');
+        console.error(
+          'User is not found in the Firestore settings, set it to regular user',
+        );
         user = {
-            id: authContext.user?.uid,
-            email: authContext.user?.email,
-            username: authContext.user?.email,
-            role: 'user',
-            password: undefined,
-            password_confirmation: undefined,
-        }
+          id: authContext.user?.uid,
+          email: authContext.user?.email,
+          username: authContext.user?.email,
+          role: 'user',
+          password: undefined,
+          password_confirmation: undefined,
+        };
       } else if (user.role !== 'admin') {
         console.log('User is not an admin, hence we do not load settings');
         users = [user];
@@ -208,10 +210,11 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
     console.log('Created document with ID:', item.id, ' in ', key);
 
     if (ctxData) {
+      await firebaseModel.savePersisted();
       // FirebaseModel above build up the cache, so we need just to refresh data from it here
       const cachedData = firebaseModel.getCached(key);
       if (cachedData) {
-        ctxData[key] = cachedData;
+        ctxData[key] = [...cachedData];
       } else {
         console.warn('Failed to fetch data from local cache');
       }

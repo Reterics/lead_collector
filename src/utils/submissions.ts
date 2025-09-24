@@ -23,7 +23,8 @@ function safeParse<T>(text: string | null): T | null {
 }
 
 export function loadSubmissions(): SubmissionEntry[] {
-  const list = safeParse<SubmissionEntry[]>(localStorage.getItem(STORAGE_KEY)) || [];
+  const list =
+    safeParse<SubmissionEntry[]>(localStorage.getItem(STORAGE_KEY)) || [];
 
   // Migrate legacy fallback records created by services/jira.ts when JIRA is not configured
   // Keys look like: questionnaire_submission_<timestamp>
@@ -33,9 +34,10 @@ export function loadSubmissions(): SubmissionEntry[] {
       const k = localStorage.key(i);
       if (!k) continue;
       if (k.startsWith('questionnaire_submission_')) {
-        const rec = safeParse<{ createdAt: string; params?: { summary: string; description: string } }>(
-          localStorage.getItem(k),
-        );
+        const rec = safeParse<{
+          createdAt: string;
+          params?: { summary: string; description: string };
+        }>(localStorage.getItem(k));
         if (rec && rec.params) {
           migrated.push({
             id: k,
@@ -73,7 +75,8 @@ export function saveSubmission(entry: SubmissionEntry) {
   const list = loadSubmissions();
   // Replace by id if exists
   const idx = list.findIndex((x) => x.id === entry.id);
-  if (idx >= 0) list[idx] = entry; else list.unshift(entry);
+  if (idx >= 0) list[idx] = entry;
+  else list.unshift(entry);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
 }
 

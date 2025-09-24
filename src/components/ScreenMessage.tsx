@@ -1,6 +1,6 @@
 import logo from '../assets/logo_dark.svg';
 import logoLight from '../assets/logo_light.svg';
-import {useTheme} from "../context/ThemeContext.tsx";
+import { useTheme } from '../context/ThemeContext.tsx';
 import { useTranslation } from 'react-i18next';
 
 const ScreenMessage = ({
@@ -12,7 +12,7 @@ const ScreenMessage = ({
   onClick?: (e: React.MouseEvent) => void;
   button?: React.ReactNode | string;
 }) => {
-  const theme = useTheme()?.theme
+  const theme = useTheme()?.theme;
   const { t } = useTranslation();
 
   return (
@@ -25,7 +25,11 @@ const ScreenMessage = ({
           href="?page=about"
           className="flex items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-white flex-col"
         >
-          <img src={theme === 'dark' ? logo : logoLight} className="h-40 mr-2" alt="Reterics logo" />
+          <img
+            src={theme === 'dark' ? logo : logoLight}
+            className="h-40 mr-2"
+            alt="Reterics logo"
+          />
           {t('app.title')}
         </a>
 

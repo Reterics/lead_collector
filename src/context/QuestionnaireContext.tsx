@@ -23,9 +23,10 @@ export function useQuestionnaireContext(): QuestionnaireContextValue {
   const [currentId, setCurrentId] = useState<string | null>(null);
 
   const all = useMemo(() => {
-    const firebaseQuestionnaires = (db?.data?.questionnaires ?? []) as unknown[];
+    const firebaseQuestionnaires = (db?.data?.questionnaires ??
+      []) as unknown[];
     // Convert Firebase entries to QuestionnaireDef when shape matches
-    const fromDb: QuestionnaireDef[] = firebaseQuestionnaires
+    return firebaseQuestionnaires
       .map((raw) => {
         const x = raw as Record<string, unknown>;
         if (
@@ -38,11 +39,6 @@ export function useQuestionnaireContext(): QuestionnaireContextValue {
         return null;
       })
       .filter(Boolean) as QuestionnaireDef[];
-
-    // de-duplicate by id (DB overrides predefined)
-    const map = new Map<string, QuestionnaireDef>();
-    for (const q of fromDb) map.set(q.id, q);
-    return Array.from(map.values());
   }, [db?.data?.questionnaires]);
 
   const value = useMemo<QuestionnaireContextValue>(
@@ -69,7 +65,9 @@ export function useQuestionnaireContext(): QuestionnaireContextValue {
   );
 
   if (!db) {
-    throw new Error('useQuestionnaireContext must be used within FirebaseProvider');
+    throw new Error(
+      'useQuestionnaireContext must be used within FirebaseProvider',
+    );
   }
 
   return value;

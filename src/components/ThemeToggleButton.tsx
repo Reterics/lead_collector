@@ -2,7 +2,9 @@ import React from 'react';
 import { useTheme } from '../context/ThemeContext.tsx';
 import { FiMoon, FiSun } from 'react-icons/fi';
 
-const ThemeToggleButton: React.FC<{ className?: string }> = ({ className = '' }) => {
+const ThemeToggleButton: React.FC<{ className?: string }> = ({
+  className = '',
+}) => {
   const ctx = useTheme();
   const isDark = ctx?.theme === 'dark';
 

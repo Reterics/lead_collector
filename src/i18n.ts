@@ -9,7 +9,7 @@ export const resources = {
         title: 'Lead Collector',
         back: 'Back',
         notFound: 'Questionnaire not found',
-        notFoundDesc: 'The requested questionnaire "{{id}}" does not exist.'
+        notFoundDesc: 'The requested questionnaire "{{id}}" does not exist.',
       },
       auth: {
         signInTitle: 'Sign in to your account',
@@ -18,7 +18,7 @@ export const resources = {
         emailLabel: 'Your email',
         passwordLabel: 'Password',
         signIn: 'Sign in',
-        logout: 'Logout'
+        logout: 'Logout',
       },
       home: {
         choose: 'Choose a questionnaire',
@@ -30,11 +30,12 @@ export const resources = {
         export: 'Export',
         delete: 'Delete',
         predefinedWarn: 'Predefined questionnaires cannot be deleted.',
-        confirmDelete: 'Delete "{{name}}"? This cannot be undone for custom questionnaires.',
+        confirmDelete:
+          'Delete "{{name}}"? This cannot be undone for custom questionnaires.',
         imported: 'Imported questionnaire: {{name}}',
         invalidJson: 'Invalid JSON',
         missingFields: 'Missing required fields: name, questions',
-        failedImport: 'Failed to import file'
+        failedImport: 'Failed to import file',
       },
       editor: {
         headingCreate: 'Create Questionnaire',
@@ -51,7 +52,7 @@ export const resources = {
           textarea: 'Textarea',
           checkbox: 'Checkbox',
           radio: 'Radio',
-          dropdown: 'Dropdown'
+          dropdown: 'Dropdown',
         },
         descriptionOptional: 'Description (optional)',
         options: 'Options',
@@ -59,7 +60,7 @@ export const resources = {
         removeOption: 'Remove',
         addQuestion: 'Add question',
         save: 'Save',
-        failedToSave: 'Failed to save'
+        failedToSave: 'Failed to save',
       },
       questionnaire: {
         yes: 'Yes',
@@ -67,7 +68,7 @@ export const resources = {
         start: 'Start',
         stop: 'Stop',
         send: 'Send',
-        sending: 'Sending...'
+        sending: 'Sending...',
       },
       submissions: {
         title: 'Submissions',
@@ -79,14 +80,14 @@ export const resources = {
           local: 'Stored locally',
           auth: 'Auth required',
           error: 'Error',
-          unknown: 'Unknown'
+          unknown: 'Unknown',
         },
         openInJira: 'Open in JIRA',
         details: 'Details',
         delete: 'Delete',
-        confirmDelete: 'Delete this submission record?'
-      }
-    }
+        confirmDelete: 'Delete this submission record?',
+      },
+    },
   },
   hu: {
     translation: {
@@ -94,7 +95,7 @@ export const resources = {
         title: 'Lead Gyűjtő',
         back: 'Vissza',
         notFound: 'Kérdőív nem található',
-        notFoundDesc: 'A kért kérdőív ("{{id}}") nem létezik.'
+        notFoundDesc: 'A kért kérdőív ("{{id}}") nem létezik.',
       },
       auth: {
         signInTitle: 'Jelentkezzen be fiókjába',
@@ -103,7 +104,7 @@ export const resources = {
         emailLabel: 'E-mail címe',
         passwordLabel: 'Jelszó',
         signIn: 'Bejelentkezés',
-        logout: 'Kijelentkezés'
+        logout: 'Kijelentkezés',
       },
       home: {
         choose: 'Válasszon kérdőívet',
@@ -115,11 +116,12 @@ export const resources = {
         export: 'Exportálás',
         delete: 'Törlés',
         predefinedWarn: 'Előre definiált kérdőíveket nem lehet törölni.',
-        confirmDelete: 'Törli: "{{name}}"? Egyedi kérdőívek esetén ez nem visszavonható.',
+        confirmDelete:
+          'Törli: "{{name}}"? Egyedi kérdőívek esetén ez nem visszavonható.',
         imported: 'Importált kérdőív: {{name}}',
         invalidJson: 'Érvénytelen JSON',
         missingFields: 'Hiányzó kötelező mezők: név, kérdések',
-        failedImport: 'A fájl importálása sikertelen'
+        failedImport: 'A fájl importálása sikertelen',
       },
       editor: {
         headingCreate: 'Kérdőív létrehozása',
@@ -136,7 +138,7 @@ export const resources = {
           textarea: 'Szövegterület',
           checkbox: 'Jelölőnégyzet',
           radio: 'Választógomb',
-          dropdown: 'Legördülő'
+          dropdown: 'Legördülő',
         },
         descriptionOptional: 'Leírás (opcionális)',
         options: 'Opciók',
@@ -144,7 +146,7 @@ export const resources = {
         removeOption: 'Eltávolítás',
         addQuestion: 'Kérdés hozzáadása',
         save: 'Mentés',
-        failedToSave: 'Mentés sikertelen'
+        failedToSave: 'Mentés sikertelen',
       },
       questionnaire: {
         yes: 'Igen',
@@ -152,7 +154,7 @@ export const resources = {
         start: 'Indítás',
         stop: 'Leállítás',
         send: 'Küldés',
-        sending: 'Küldés...'
+        sending: 'Küldés...',
       },
       submissions: {
         title: 'Beküldések',
@@ -164,26 +166,24 @@ export const resources = {
           local: 'Helyben tárolva',
           auth: 'Hitelesítés szükséges',
           error: 'Hiba',
-          unknown: 'Ismeretlen'
+          unknown: 'Ismeretlen',
         },
         openInJira: 'Megnyitás JIRA-ban',
         details: 'Részletek',
         delete: 'Törlés',
-        confirmDelete: 'Törli ezt a beküldési rekordot?'
-      }
-    }
-  }
+        confirmDelete: 'Törli ezt a beküldési rekordot?',
+      },
+    },
+  },
 } as const;
 
-void i18n
-  .use(initReactI18next)
-  .init({
-    resources,
-    lng: 'en',
-    fallbackLng: 'en',
-    interpolation: {
-      escapeValue: false
-    }
-  });
+void i18n.use(initReactI18next).init({
+  resources,
+  lng: 'en',
+  fallbackLng: 'en',
+  interpolation: {
+    escapeValue: false,
+  },
+});
 
 export default i18n;
