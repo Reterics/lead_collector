@@ -1,10 +1,13 @@
-# Lead Collector
+# ![Logo](./public/logo_48.png) Lead Collector
 
 [![build](https://github.com/Reterics/lead_collector/actions/workflows/npm-build-test.yml/badge.svg)](https://github.com/Reterics/lead_collector/actions/workflows/npm-build-test.yml) [![codecov](https://codecov.io/github/Reterics/lead_collector/graph/badge.svg?token=VA00FOSC8W)](https://codecov.io/github/Reterics/lead_collector) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+![Preview](./public/screens.png)
 
 A lightweight React + TypeScript (Vite) single‑page app that captures leads through a questionnaire and, when configured, creates Jira issues via Atlassian OAuth 2.0 (3LO). Includes minimal PHP endpoints to handle OAuth and server‑side Jira REST calls.
 
 ## Table of contents
+
 - Overview
 - Features
 - Architecture
@@ -22,9 +25,11 @@ A lightweight React + TypeScript (Vite) single‑page app that captures leads th
 - License
 
 ## Overview
+
 Lead Collector provides a simple UI for collecting user input and creating a Jira issue in a configured project. If Jira is not configured, the app will store the submission locally so you can still validate the UX.
 
 ## Features
+
 - React 19 + TypeScript + Vite for fast DX
 - Minimal backend glue in PHP to:
   - Perform Atlassian OAuth 2.0 (3LO)
@@ -33,6 +38,7 @@ Lead Collector provides a simple UI for collecting user input and creating a Jir
 - Attachment upload best‑effort support (client to server to Jira)
 
 ## Architecture
+
 - Frontend (Vite SPA)
   - Key files:
     - src/components/Questionnaire.tsx – capture user input
@@ -44,22 +50,24 @@ Lead Collector provides a simple UI for collecting user input and creating a Jir
 The OAuth flow is initiated by the client when a 401 response is received from api.php. After the user consents, auth.php exchanges the code, stores access_token, cloud_id, etc. in PHP session, and redirects back to the SPA.
 
 ## Prerequisites
+
 - Node.js 18+ (recommended 20+)
 - PHP 8.1+ with cURL extension enabled
 - A Jira Cloud site and an Atlassian OAuth 2.0 (3LO) app
 
 ## Quick start (development)
-1) Install dependencies
+
+1. Install dependencies
    npm install
 
-2) Configure environment (optional for local‑only mode)
+2. Configure environment (optional for local‑only mode)
    Copy .env.example to .env and fill the Jira values (see Configuration below). If you skip Jira configuration, the app will store submissions locally.
 
-3) Start Vite dev server
+3. Start Vite dev server
    npm run dev
    The app will be available at http://localhost:5173
 
-4) Serve PHP files
+4. Serve PHP files
    Ensure a PHP server serves the public directory at the same origin as the SPA during development. Example using PHP’s built‑in server:
    php -S localhost:5173 -t public
    If you serve PHP on a different port/origin, you will need to handle CORS and adjust paths. The simplest setup is to serve both SPA and PHP under the same origin.
@@ -67,10 +75,13 @@ The OAuth flow is initiated by the client when a 401 response is received from a
 Tip: In many setups you’ll place public/ under your web root (e.g., Apache/Nginx) and point the SPA’s base to "./" (already set in vite.config.ts).
 
 ## Configuration
+
 ### Environment variables
+
 Use .env (Vite) and web server environment for PHP.
 
 Frontend (Vite):
+
 - VITE_JIRA_PROJECT_KEY – Jira project key (e.g., ABC)
 - VITE_JIRA_ISSUE_TYPE – Optional issue type name (default: Task)
 - VITE_FIREBASE_API_KEY – Firebase Web API Key (optional)
@@ -79,6 +90,7 @@ Frontend (Vite):
 - VITE_FIREBASE_APP_ID – Firebase app id (optional)
 
 Backend (PHP) – set as web server environment variables used by public/auth.php:
+
 - JIRA_CLIENT_ID – Atlassian OAuth 2.0 client id
 - JIRA_CLIENT_SECRET – Atlassian OAuth 2.0 client secret
 - JIRA_REDIRECT_URI – Redirect URL registered in your Atlassian app (must point to public/auth.php)
@@ -87,49 +99,56 @@ Backend (PHP) – set as web server environment variables used by public/auth.ph
 See .env.example for a starting point for the frontend variables.
 
 ### Firebase usage
+
 - If Firebase env vars are provided, the app will:
   - Use Firestore collection "questionnaires" for listing questionnaires on the home page.
   - Enable a simple Auth page at the route /login with Google sign-in/out.
 - Firestore document shape for questionnaires:
   {
-    name: string,
-    description?: string,
-    questions: [{ id: string, name: string, type: 'text'|'textarea'|'checkbox'|'radio'|'dropdown', description?: string, options?: string[] }]
+  name: string,
+  description?: string,
+  questions: [{ id: string, name: string, type: 'text'|'textarea'|'checkbox'|'radio'|'dropdown', description?: string, options?: string[] }]
   }
 - When Firebase is not configured or the collection is empty, the app falls back to built-in predefined questionnaires.
 
 ### Jira OAuth app setup
-1) Create a 3LO app in https://developer.atlassian.com/ (select Jira scope).
-2) Add the following OAuth scopes at minimum (auth.php sets these):
+
+1. Create a 3LO app in https://developer.atlassian.com/ (select Jira scope).
+2. Add the following OAuth scopes at minimum (auth.php sets these):
    - read:jira-user
    - read:jira-work
    - write:jira-work
    - offline_access (optional if you plan token refresh)
-3) Set the Redirect URL to your deployed auth endpoint, e.g.:
+3. Set the Redirect URL to your deployed auth endpoint, e.g.:
    https://your-domain/auth.php
    or during development:
    http://localhost:5173/auth.php
-4) Put the Client ID/Secret into your server environment as listed above.
+4. Put the Client ID/Secret into your server environment as listed above.
 
 ## Running
+
 ### Development
+
 - Start Vite and your PHP web server as described in Quick start.
 - When creating an issue, if not authenticated, the app will redirect to Atlassian to consent, then back to the SPA.
 
 ### Production build and serve
+
 - Build static assets:
   npm run build
   This outputs to dist/
 - Deploy strategy options:
-  - Serve dist/ as static files via your web server and place auth.php and api.php under the same origin. You may copy public/*.php alongside your static root or configure routing so they are reachable at /auth.php and /api.php.
+  - Serve dist/ as static files via your web server and place auth.php and api.php under the same origin. You may copy public/\*.php alongside your static root or configure routing so they are reachable at /auth.php and /api.php.
   - Ensure PHP has sessions and cURL enabled.
 
 ## Deployment notes
+
 - Same‑origin is recommended so fetch('./api.php') works without CORS. If you must use a different origin, update api.php CORS and adjust frontend paths.
 - Ensure session storage is persistent and secure in production (configure session.save_path, cookies with Secure/HttpOnly, etc.).
 - Consider adding HTTPS everywhere and secure cookie flags in production.
 
 ## Troubleshooting
+
 - 401 not_authenticated from api.php
   - You are not logged in with Atlassian yet; the client should redirect via auth.php?action=start.
 - token_exchange_failed or resource_discovery_failed in auth.php
@@ -140,11 +159,14 @@ See .env.example for a starting point for the frontend variables.
   - Check project key, issue type name, and permissions for the OAuth app user.
 
 ## Scripts
+
 Defined in package.json:
+
 - npm run dev – Start Vite dev server
 - npm run build – Type‑check and build production assets
 - npm run preview – Preview production build locally
 - npm run lint – Run ESLint
 
 ## License
+
 This project is provided without an explicit license. Add your preferred license here if needed.
