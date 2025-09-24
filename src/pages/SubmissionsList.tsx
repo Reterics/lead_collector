@@ -1,8 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   loadSubmissions,
   removeSubmission,
+  saveSubmission,
   type SubmissionEntry,
 } from '../utils/submissions.ts';
 import {
@@ -12,6 +13,13 @@ import {
   FiExternalLink,
 } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
+import { firebaseModel } from '../config.ts';
+import {
+  createIssue,
+  type IssueSuccessResponse,
+  type IssueLocalResponse,
+  type IssueRedirectResponse,
+} from '../services/jira.ts';
 
 const statusBadge: Record<string, string> = {
   jira: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300',
@@ -30,9 +38,9 @@ function formatDate(iso: string) {
 }
 
 const SubmissionsList: React.FC = () => {
-  const [items, setItems] = useState<SubmissionEntry[]>(() =>
-    loadSubmissions(),
-  );
+  const [items, setItems] = useState<SubmissionEntry[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [retrying, setRetrying] = useState<Record<string, boolean>>({});
   const { t } = useTranslation();
 
   const sorted = useMemo(() => {
@@ -41,12 +49,123 @@ const SubmissionsList: React.FC = () => {
     );
   }, [items]);
 
-  const refresh = () => setItems(loadSubmissions());
+  const fetchFromFirestore = async () => {
+    try {
+      const fsItems = (await firebaseModel.getAll('submissions', true)) as unknown as Array<{
+        id: string;
+        createdAt?: string;
+        questionnaireName?: string;
+        summary?: string;
+        description?: string;
+        status?: string;
+        issueKey?: string;
+        issueUrl?: string;
+      }>;
+      const mapped: SubmissionEntry[] = (fsItems || []).map((d) => ({
+        id: d.id,
+        createdAt: d.createdAt || new Date().toISOString(),
+        questionnaireName: d.questionnaireName || 'Unknown',
+        summary: d.summary || '',
+        description: d.description || '',
+        status: (d.status as SubmissionEntry['status']) || 'unknown',
+        issueKey: d.issueKey,
+        issueUrl: d.issueUrl,
+      }));
+      // merge with local legacy/localStorage submissions (keep both, Firestore preferred when id collides)
+      const local = loadSubmissions();
+      const map = new Map<string, SubmissionEntry>();
+      for (const s of local) map.set(s.id, s);
+      for (const m of mapped) map.set(m.id, m);
+      setItems(Array.from(map.values()));
+    } catch (e) {
+      console.error('Failed to load submissions from Firestore', e);
+      // Fallback to local only
+      setItems(loadSubmissions());
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const onDelete = (id: string) => {
+  const refresh = () => {
+    setLoading(true);
+    void fetchFromFirestore();
+  };
+
+  useEffect(() => {
+    void fetchFromFirestore();
+  }, []);
+
+  const onDelete = async (id: string) => {
     if (confirm(t('submissions.confirmDelete'))) {
+      await firebaseModel.remove(id, 'submissions');
+      // Always remove local copy if exists
       removeSubmission(id);
       refresh();
+    }
+  };
+
+  const onRetry = async (s: SubmissionEntry) => {
+    setRetrying((r) => ({ ...r, [s.id]: true }));
+    try {
+      const res = await createIssue({ summary: s.summary, description: s.description });
+
+      let nextStatus: SubmissionEntry['status'] = s.status;
+      let issueKey: string | undefined = s.issueKey;
+      let issueUrl: string | undefined = s.issueUrl;
+
+      if ((res as IssueSuccessResponse)?.id) {
+        nextStatus = 'jira';
+        issueKey = (res as IssueSuccessResponse).key;
+        issueUrl = (res as IssueSuccessResponse).self;
+      } else if ((res as IssueRedirectResponse)?.redirectingToAuth) {
+        nextStatus = 'auth';
+        // Navigation will redirect; we still update local/Firestore best-effort
+      } else if ((res as IssueLocalResponse)?.storedLocally) {
+        nextStatus = 'local';
+      }
+
+      // Update Firestore record if exists
+      try {
+        await firebaseModel.update(
+          {
+            id: s.id,
+            createdAt: s.createdAt,
+            questionnaireName: s.questionnaireName,
+            summary: s.summary,
+            description: s.description,
+            status: nextStatus,
+            issueKey,
+            issueUrl,
+          },
+          'submissions',
+        );
+      } catch (e) {
+        // ignore Firestore update errors
+        void e;
+      }
+
+      // Update local submission storage as well
+      saveSubmission({
+        ...s,
+        status: nextStatus,
+        issueKey,
+        issueUrl,
+      });
+
+      // Refresh list to reflect the updated state
+      refresh();
+    } catch {
+      await firebaseModel.update(
+        {
+          id: s.id,
+          status: 'error',
+        },
+        'submissions',
+      );
+      saveSubmission({ ...s, status: 'error' });
+      refresh();
+    } finally {
+      setRetrying((r) => ({ ...r, [s.id]: false }));
     }
   };
 
@@ -69,6 +188,7 @@ const SubmissionsList: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={refresh}
+            disabled={loading}
             className="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-md bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
             title={t('submissions.refresh')}
           >
@@ -135,7 +255,20 @@ const SubmissionsList: React.FC = () => {
                     </pre>
                   </details>
                 </div>
-                <div>
+                <div className="flex flex-col items-center gap-2">
+                  {(s.status === 'local' || s.status === 'error') && (
+                    <button
+                      onClick={() => onRetry(s)}
+                      disabled={!!retrying[s.id]}
+                      className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-60"
+                      title={t('submissions.retry')}
+                    >
+                      <FiRefreshCcw />
+                      <span className="hidden sm:inline">
+                        {retrying[s.id] ? t('submissions.retrying') : t('submissions.retry')}
+                      </span>
+                    </button>
+                  )}
                   <button
                     onClick={() => onDelete(s.id)}
                     className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md bg-red-600 text-white hover:bg-red-700"
