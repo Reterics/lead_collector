@@ -1,15 +1,15 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   createIssue,
   type IssueLocalResponse,
-  type IssueSuccessResponse,
   type IssueRedirectResponse,
+  type IssueSuccessResponse,
 } from '../services/jira.ts';
-import { saveSubmission } from '../utils/submissions.ts';
-import { firebaseModel } from '../config.ts';
-import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams } from 'react-router-dom';
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import {saveSubmission} from '../utils/submissions.ts';
+import {firebaseModel} from '../config.ts';
+import {useTranslation} from 'react-i18next';
+import {useNavigate, useParams} from 'react-router-dom';
+import {getDownloadURL, getStorage, ref as storageRef, uploadBytes} from 'firebase/storage';
 import type {CommonCollectionData} from "../services/firebase.tsx";
 
 // Types matching the provided JSON format
@@ -116,6 +116,92 @@ function useVoiceRecorder() {
   return { recording, audioBlob, start, stop, error, devices, selectedDeviceId, setSelectedDeviceId, refreshDevices };
 }
 
+// Textarea field with its own voice recorder instance
+const TextareaWithRecorder: React.FC<{
+  value: string;
+  onChange: (v: string) => void;
+  onRecordingChange: (blob: Blob | null) => void;
+}> = ({ value, onChange, onRecordingChange }) => {
+  const { t } = useTranslation();
+  const voice = useVoiceRecorder();
+
+  useEffect(() => {
+    onRecordingChange(voice.audioBlob);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [voice.audioBlob]);
+
+  return (
+    <div className="mt-1">
+      <textarea
+        rows={4}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+      <div className="flex items-center sm:flex-row sm:items-center gap-2 mt-2">
+        <select
+          value={voice.selectedDeviceId}
+          onChange={(e) => voice.setSelectedDeviceId(e.target.value)}
+          className="block rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          {voice.devices.length === 0 && (
+            <option value="">
+              {t('questionnaire.no_mics') || 'No microphones found'}
+            </option>
+          )}
+          {voice.devices.map((d) => (
+            <option key={d.deviceId} value={d.deviceId}>
+              {d.label || t('questionnaire.unknown_mic') || 'Microphone'}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={voice.refreshDevices}
+          title={t('questionnaire.refresh_mics') || 'Refresh microphones'}
+          className="px-2 py-1 text-xs rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
+        >
+          ⟳
+        </button>
+      </div>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-2">
+        {!voice.recording ? (
+          <button
+            type="button"
+            onClick={voice.start}
+            disabled={!voice.selectedDeviceId}
+            className={`px-3 py-1.5 text-sm rounded-md text-white focus:outline-none focus:ring-2 ${!voice.selectedDeviceId ? 'bg-emerald-400/50 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500'}`}
+          >
+            🎙️ {t('questionnaire.start')}
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={voice.stop}
+            className="px-3 py-1.5 text-sm rounded-md bg-red-600 text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+          >
+            ⏹️ {t('questionnaire.stop')}
+          </button>
+        )}
+
+        {voice.error && (
+          <span className="text-xs text-red-600 dark:text-red-400">
+            {voice.error}
+          </span>
+        )}
+
+        {voice.audioBlob && (
+          <audio
+            controls
+            src={URL.createObjectURL(voice.audioBlob)}
+            className="w-full"
+          />
+        )}
+      </div>
+    </div>
+  );
+};
+
 export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
   const { t } = useTranslation();
   const initialState = useMemo(() => {
@@ -132,8 +218,8 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [recordings, setRecordings] = useState<Record<string, Blob | null>>({});
 
-  const voice = useVoiceRecorder();
   const navigate = useNavigate();
   const { id: routeId } = useParams<{ id: string }>();
 
@@ -146,6 +232,29 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
     setValues((v) => ({ ...v, [id]: value }));
   };
 
+  const submitAudioToFirebase = useCallback(async (baseItem: CommonCollectionData) => {
+    if (baseItem.id) {
+      try {
+        const storage = getStorage(firebaseModel.getApp());
+        const recordingUrls: Record<string, string> = {};
+        for (const [qid, blob] of Object.entries(recordings)) {
+          if (!blob) continue;
+          const path = `submissions/${baseItem.id}/recordings/${qid}-recording-${Date.now()}.webm`;
+          const ref = storageRef(storage, path);
+          await uploadBytes(ref, blob, {
+            contentType: blob.type || 'audio/webm',
+          });
+          recordingUrls[qid] = await getDownloadURL(ref);
+        }
+        if (Object.keys(recordingUrls).length > 0) {
+          baseItem.recordingUrls = recordingUrls;
+          await firebaseModel.update(baseItem, 'submissions');
+        }
+      } catch (uploadErr) {
+        console.error('Failed to upload recordings to Firebase Storage (error path)', uploadErr);
+      }
+    }
+  }, [recordings]);
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
@@ -164,14 +273,16 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
       }
       const description = lines.join('\n');
 
-      // prepare attachments: include voice recording if available
+      // prepare attachments: include all per-question voice recordings if available
       const attachments: File[] = [];
-      if (voice.audioBlob) {
-        attachments.push(
-          new File([voice.audioBlob], `recording-${Date.now()}.webm`, {
-            type: voice.audioBlob.type || 'audio/webm',
-          }),
-        );
+      for (const [qid, blob] of Object.entries(recordings)) {
+        if (blob) {
+          attachments.push(
+            new File([blob], `recording-${qid}-${Date.now()}.webm`, {
+              type: blob.type || 'audio/webm',
+            }),
+          );
+        }
       }
 
       const res = await createIssue({ summary, description }, attachments);
@@ -219,23 +330,8 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
         // Use update() instead of add() to get an id injected into the object
         await firebaseModel.update(baseItem, 'submissions');
 
-        // If there is a voice recording, upload it to Firebase Storage and store URL
-        if (voice.audioBlob && baseItem.id) {
-          try {
-            const storage = getStorage(firebaseModel.getApp());
-            const path = `submissions/${baseItem.id}/recording-${Date.now()}.webm`;
-            const ref = storageRef(storage, path);
-            await uploadBytes(ref, voice.audioBlob, {
-              contentType: voice.audioBlob.type || 'audio/webm',
-            });
-            const url = await getDownloadURL(ref);
-            baseItem.recordingUrl = url;
-            baseItem.recordingPath = path;
-            await firebaseModel.update(baseItem, 'submissions');
-          } catch (uploadErr) {
-            console.error('Failed to upload recording to Firebase Storage', uploadErr);
-          }
-        }
+        // Upload per-question voice recordings, store URL map
+        await submitAudioToFirebase(baseItem)
       } catch (e) {
         console.error('Failed to write submission to Firestore', e);
       }
@@ -291,22 +387,7 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
         } as unknown as CommonCollectionData;
         await firebaseModel.update(baseItem, 'submissions');
 
-        if (voice.audioBlob && baseItem.id) {
-          try {
-            const storage = getStorage(firebaseModel.getApp());
-            const path = `submissions/${baseItem.id}/recording-${Date.now()}.webm`;
-            const ref = storageRef(storage, path);
-            await uploadBytes(ref, voice.audioBlob, {
-              contentType: voice.audioBlob.type || 'audio/webm',
-            });
-            const url = await getDownloadURL(ref);
-            baseItem.recordingUrl = url;
-            baseItem.recordingPath = path;
-            await firebaseModel.update(baseItem, 'submissions');
-          } catch (uploadErr) {
-            console.error('Failed to upload recording to Firebase Storage (error path)', uploadErr);
-          }
-        }
+        await submitAudioToFirebase(baseItem)
       } catch (e) {
         console.error('Failed to write error submission to Firestore', e);
       }
@@ -315,7 +396,6 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
     }
   };
 
-  console.error(voice)
   return (
     <>
       <div className="mb-6">
@@ -350,74 +430,13 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
               )}
 
               {q.type === 'textarea' && (
-                <div className="mt-1">
-                  <textarea
-                    rows={4}
-                    value={(values[q.id] as string) || ''}
-                    onChange={(e) => onChange(q.id, e.target.value)}
-                    className="block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <div className="flex items-center sm:flex-row sm:items-center gap-2 mt-2">
-                    <select
-                      value={voice.selectedDeviceId}
-                      onChange={(e) => voice.setSelectedDeviceId(e.target.value)}
-                      className="block rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      {voice.devices.length === 0 && (
-                        <option value="">
-                          {t('questionnaire.no_mics') || 'No microphones found'}
-                        </option>
-                      )}
-                      {voice.devices.map((d) => (
-                        <option key={d.deviceId} value={d.deviceId}>
-                          {d.label || t('questionnaire.unknown_mic') || 'Microphone'}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type="button"
-                      onClick={voice.refreshDevices}
-                      title={t('questionnaire.refresh_mics') || 'Refresh microphones'}
-                      className="px-2 py-1 text-xs rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
-                    >
-                      ⟳
-                    </button>
-                  </div>
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-2">
-                    {!voice.recording ? (
-                      <button
-                        type="button"
-                        onClick={voice.start}
-                        disabled={!voice.selectedDeviceId}
-                        className={`px-3 py-1.5 text-sm rounded-md text-white focus:outline-none focus:ring-2 ${!voice.selectedDeviceId ? 'bg-emerald-400/50 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500'}`}
-                      >
-                        🎙️ {t('questionnaire.start')}
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={voice.stop}
-                        className="px-3 py-1.5 text-sm rounded-md bg-red-600 text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
-                      >
-                        ⏹️ {t('questionnaire.stop')}
-                      </button>
-                    )}
-
-                    {voice.error && (
-                      <span className="text-xs text-red-600 dark:text-red-400">
-                        {voice.error}
-                      </span>
-                    )}
-
-                    {voice.audioBlob && (
-                      <audio
-                        controls
-                        src={URL.createObjectURL(voice.audioBlob)}
-                        className="w-full"
-                      />
-                    )}
-                  </div>
-                </div>
+                <TextareaWithRecorder
+                  value={(values[q.id] as string) || ''}
+                  onChange={(v) => onChange(q.id, v)}
+                  onRecordingChange={(blob) =>
+                    setRecordings((prev) => ({ ...prev, [q.id]: blob }))
+                  }
+                />
               )}
 
               {q.type === 'checkbox' && (
