@@ -9,6 +9,8 @@ import { saveSubmission } from '../utils/submissions.ts';
 import { firebaseModel } from '../config.ts';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import type {CommonCollectionData} from "../services/firebase.tsx";
 
 // Types matching the provided JSON format
 export type Question = {
@@ -28,18 +30,60 @@ export type QuestionnaireProps = {
   schema: QuestionnaireSchema;
 };
 
-// MediaRecorder hook for simple voice recording
+// MediaRecorder hook for voice recording with selectable audio input device
 function useVoiceRecorder() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const [recording, setRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('');
+  const [initialised, setInitialised] = useState(false);
+
+  const refreshDevices = async () => {
+    try {
+      // Attempt to get permission so device labels are populated
+      if (!initialised) {
+        try {
+          const tmpStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          tmpStream.getTracks().forEach((t) => t.stop());
+        } catch {
+          // ignore, enumerateDevices may still work, but labels could be empty
+        }
+        setInitialised(true);
+      }
+      const all = await navigator.mediaDevices.enumerateDevices();
+      const mics = all.filter((d) => d.kind === 'audioinput');
+      setDevices(mics);
+      // Keep selection if still available; otherwise choose first
+      setSelectedDeviceId((prev) => {
+        if (prev && mics.some((d) => d.deviceId === prev)) return prev;
+        return mics[0]?.deviceId || '';
+      });
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Unable to list audio devices.';
+      setError(msg);
+    }
+  };
+
+  useEffect(() => {
+    void refreshDevices();
+    const handler = () => refreshDevices();
+    navigator.mediaDevices?.addEventListener?.('devicechange', handler);
+    return () => {
+      navigator.mediaDevices?.removeEventListener?.('devicechange', handler);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const start = async () => {
     try {
       setError(null);
       setAudioBlob(null);
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const constraints: MediaStreamConstraints = {
+        audio: selectedDeviceId ? { deviceId: { exact: selectedDeviceId } } : true,
+      };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       const mr = new MediaRecorder(stream);
       mediaRecorderRef.current = mr;
       const chunks: BlobPart[] = [];
@@ -47,8 +91,12 @@ function useVoiceRecorder() {
       mr.onstop = () => {
         const blob = new Blob(chunks, { type: 'audio/webm' });
         setAudioBlob(blob);
+        console.error(blob)
         stream.getTracks().forEach((t) => t.stop());
       };
+      mr.onerror = (e) => {
+        console.error(e);
+      }
       mr.start();
       setRecording(true);
     } catch (e: unknown) {
@@ -65,7 +113,7 @@ function useVoiceRecorder() {
     }
   };
 
-  return { recording, audioBlob, start, stop, error };
+  return { recording, audioBlob, start, stop, error, devices, selectedDeviceId, setSelectedDeviceId, refreshDevices };
 }
 
 export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
@@ -152,24 +200,42 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
 
       // Persist to Firestore regardless of JIRA outcome
       try {
-        await firebaseModel.add(
-          {
-            createdAt: new Date().toISOString(),
-            questionnaireName: schema.name,
-            summary,
-            description,
-            status,
-            issueKey,
-            issueUrl,
-            values,
-            questions: schema.questions.map((q) => ({
-              id: q.id,
-              name: q.name,
-              type: q.type,
-            })),
-          },
-          'submissions',
-        );
+        // First create or update a document to obtain an ID
+        const baseItem: CommonCollectionData = {
+          createdAt: new Date().toISOString(),
+          questionnaireName: schema.name,
+          summary,
+          description,
+          status,
+          issueKey,
+          issueUrl,
+          values,
+          questions: schema.questions.map((q) => ({
+            id: q.id,
+            name: q.name,
+            type: q.type,
+          })),
+        } as unknown as CommonCollectionData;
+        // Use update() instead of add() to get an id injected into the object
+        await firebaseModel.update(baseItem, 'submissions');
+
+        // If there is a voice recording, upload it to Firebase Storage and store URL
+        if (voice.audioBlob && baseItem.id) {
+          try {
+            const storage = getStorage(firebaseModel.getApp());
+            const path = `submissions/${baseItem.id}/recording-${Date.now()}.webm`;
+            const ref = storageRef(storage, path);
+            await uploadBytes(ref, voice.audioBlob, {
+              contentType: voice.audioBlob.type || 'audio/webm',
+            });
+            const url = await getDownloadURL(ref);
+            baseItem.recordingUrl = url;
+            baseItem.recordingPath = path;
+            await firebaseModel.update(baseItem, 'submissions');
+          } catch (uploadErr) {
+            console.error('Failed to upload recording to Firebase Storage', uploadErr);
+          }
+        }
       } catch (e) {
         console.error('Failed to write submission to Firestore', e);
       }
@@ -207,25 +273,40 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
       setError(msg);
       // Persist error submission to Firestore
       try {
-        await firebaseModel.add(
-          {
-            createdAt: new Date().toISOString(),
-            questionnaireName: schema.name,
-            summary: `${schema.name} response - ${new Date().toLocaleString()}`,
-            description: Object.entries(values)
-              .map(([k, v]) => `${k}: ${String(v)}`)
-              .join('\n'),
-            status: 'error',
-            error: msg,
-            values,
-            questions: schema.questions.map((q) => ({
-              id: q.id,
-              name: q.name,
-              type: q.type,
-            })),
-          },
-          'submissions',
-        );
+        const baseItem: CommonCollectionData = {
+          createdAt: new Date().toISOString(),
+          questionnaireName: schema.name,
+          summary: `${schema.name} response - ${new Date().toLocaleString()}`,
+          description: Object.entries(values)
+            .map(([k, v]) => `${k}: ${String(v)}`)
+            .join('\n'),
+          status: 'error',
+          error: msg,
+          values,
+          questions: schema.questions.map((q) => ({
+            id: q.id,
+            name: q.name,
+            type: q.type,
+          })),
+        } as unknown as CommonCollectionData;
+        await firebaseModel.update(baseItem, 'submissions');
+
+        if (voice.audioBlob && baseItem.id) {
+          try {
+            const storage = getStorage(firebaseModel.getApp());
+            const path = `submissions/${baseItem.id}/recording-${Date.now()}.webm`;
+            const ref = storageRef(storage, path);
+            await uploadBytes(ref, voice.audioBlob, {
+              contentType: voice.audioBlob.type || 'audio/webm',
+            });
+            const url = await getDownloadURL(ref);
+            baseItem.recordingUrl = url;
+            baseItem.recordingPath = path;
+            await firebaseModel.update(baseItem, 'submissions');
+          } catch (uploadErr) {
+            console.error('Failed to upload recording to Firebase Storage (error path)', uploadErr);
+          }
+        }
       } catch (e) {
         console.error('Failed to write error submission to Firestore', e);
       }
@@ -234,6 +315,7 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
     }
   };
 
+  console.error(voice)
   return (
     <>
       <div className="mb-6">
@@ -275,12 +357,39 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
                     onChange={(e) => onChange(q.id, e.target.value)}
                     className="block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                  <div className="flex items-center gap-2 mt-2">
+                  <div className="flex items-center sm:flex-row sm:items-center gap-2 mt-2">
+                    <select
+                      value={voice.selectedDeviceId}
+                      onChange={(e) => voice.setSelectedDeviceId(e.target.value)}
+                      className="block rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      {voice.devices.length === 0 && (
+                        <option value="">
+                          {t('questionnaire.no_mics') || 'No microphones found'}
+                        </option>
+                      )}
+                      {voice.devices.map((d) => (
+                        <option key={d.deviceId} value={d.deviceId}>
+                          {d.label || t('questionnaire.unknown_mic') || 'Microphone'}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={voice.refreshDevices}
+                      title={t('questionnaire.refresh_mics') || 'Refresh microphones'}
+                      className="px-2 py-1 text-xs rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
+                    >
+                      ⟳
+                    </button>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-2">
                     {!voice.recording ? (
                       <button
                         type="button"
                         onClick={voice.start}
-                        className="px-3 py-1.5 text-sm rounded-md bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        disabled={!voice.selectedDeviceId}
+                        className={`px-3 py-1.5 text-sm rounded-md text-white focus:outline-none focus:ring-2 ${!voice.selectedDeviceId ? 'bg-emerald-400/50 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500'}`}
                       >
                         🎙️ {t('questionnaire.start')}
                       </button>
@@ -293,11 +402,13 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
                         ⏹️ {t('questionnaire.stop')}
                       </button>
                     )}
+
                     {voice.error && (
                       <span className="text-xs text-red-600 dark:text-red-400">
                         {voice.error}
                       </span>
                     )}
+
                     {voice.audioBlob && (
                       <audio
                         controls

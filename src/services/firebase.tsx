@@ -30,7 +30,7 @@ export interface UserData extends GeneralCollectionEntry {
 
 export interface CommonCollectionData {
   id: string;
-  [key: string]: string | number | boolean | undefined;
+  [key: string]: string | number | boolean | undefined | object;
 }
 
 export interface KVCollectionStore {
