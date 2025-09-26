@@ -21,7 +21,7 @@ function currentUrlForRedirect() {
 }
 
 async function callApi(action: string, init: RequestInit): Promise<Response> {
-  const url = `./api.php?action=${encodeURIComponent(action)}`;
+  const url = `../api.php?action=${encodeURIComponent(action)}`;
   const resp = await fetch(url, {
     credentials: 'include', // send PHP session cookie
     ...init,
@@ -29,7 +29,7 @@ async function callApi(action: string, init: RequestInit): Promise<Response> {
 
   // If not authenticated, kick off OAuth 3LO
   if (resp.status === 401) {
-    window.location.href = `./auth.php?action=start&redirect=${currentUrlForRedirect()}`;
+    window.location.href = `../auth.php?action=start&redirect=${currentUrlForRedirect()}`;
     // Return a Response-like object to keep types happy if caller awaits
     // but effectively the navigation above takes over.
   }
@@ -49,6 +49,26 @@ export type IssueLocalResponse = {
 export type IssueRedirectResponse = {
   redirectingToAuth: boolean;
 };
+
+export type CheckConnectionResponse = {
+  error: string | null;
+  message?: string;
+  status?: number;
+};
+
+export async function checkJiraConnection(): Promise<{ status: number; json: CheckConnectionResponse | null }> {
+  try {
+    const resp = await fetch(`../api.php?action=check-connection`, {
+      method: 'GET',
+      credentials: 'include',
+    });
+    let json: CheckConnectionResponse | null = null;
+    try { json = (await resp.json()) as CheckConnectionResponse; } catch { json = null; }
+    return { status: resp.status, json };
+  } catch (e) {
+    return { status: 0, json: { error: 'network_error', message: (e as Error)?.message || 'Network error' } };
+  }
+}
 
 export const createIssue = async (
   params: CreateIssueParams,
