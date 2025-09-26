@@ -8,6 +8,7 @@ import {
 import { saveSubmission } from '../utils/submissions.ts';
 import { firebaseModel } from '../config.ts';
 import { useTranslation } from 'react-i18next';
+import { useNavigate, useParams } from 'react-router-dom';
 
 // Types matching the provided JSON format
 export type Question = {
@@ -85,6 +86,8 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
   const [error, setError] = useState<string | null>(null);
 
   const voice = useVoiceRecorder();
+  const navigate = useNavigate();
+  const { id: routeId } = useParams<{ id: string }>();
 
   useEffect(() => {
     // reset when schema changes
@@ -132,9 +135,6 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
         status = 'jira';
         issueKey = (res as IssueSuccessResponse).key;
         issueUrl = (res as IssueSuccessResponse).self;
-        setResult(
-          `Created JIRA issue: ${(res as IssueSuccessResponse).key} (${(res as IssueSuccessResponse).self})`,
-        );
       } else if ((res as IssueLocalResponse).storedLocally) {
         status = 'local';
         setResult('Submission stored locally (JIRA not configured).');
@@ -186,6 +186,21 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
           issueKey,
           issueUrl,
         });
+      }
+
+      // Navigate to success page if JIRA issue was created
+      if (status === 'jira' && issueKey) {
+        const successPath = routeId
+          ? `/questionnaires/${routeId}/success`
+          : '/';
+        navigate(successPath, {
+          state: { issueKey, issueUrl, summary },
+          replace: false,
+        });
+      } else if (status === 'local') {
+        setTimeout(() => {
+          navigate('/submissions');
+        }, 2000);
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to submit';

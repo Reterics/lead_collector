@@ -3,6 +3,7 @@ import Home from './pages/Home.tsx';
 import Questionnaire from './pages/Questionnaire.tsx';
 import QuestionnaireEditor from './pages/QuestionnaireEditor.tsx';
 import SubmissionsList from './pages/SubmissionsList.tsx';
+import JiraSuccess from './pages/JiraSuccess.tsx';
 import { useQuestionnaireContext } from './context/QuestionnaireContext';
 import SignInComponent from './pages/SignIn.tsx';
 import AuthProvider, { AuthContext } from './context/AuthContext.tsx';
@@ -105,6 +106,16 @@ function App() {
                   <AuthenticatedRoute>
                     <FirebaseProvider>
                       <QuestionnaireRoute />
+                    </FirebaseProvider>
+                  </AuthenticatedRoute>
+                }
+              />
+              <Route
+                path="/questionnaires/:id/success"
+                element={
+                  <AuthenticatedRoute>
+                    <FirebaseProvider>
+                      <JiraSuccess />
                     </FirebaseProvider>
                   </AuthenticatedRoute>
                 }

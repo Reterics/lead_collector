@@ -42,3 +42,23 @@ export const generatePrefixedFirebaseDocId = (prefix: string): string => {
   const id = generateFirebaseDocId();
   return `${prefix}_${id}`;
 };
+
+export const normalizeJiraUrl = (selfUrl?: string, key?: string): string | undefined => {
+  if (!selfUrl) return undefined;
+  try {
+    const u = new URL(selfUrl);
+    // If this looks like an Atlassian API URL, try to transform to the browse link
+    // Example: https://api.atlassian.com/ex/jira/{cloudId}/rest/api/3/issue/{key}
+    if (u.hostname === 'api.atlassian.com' && key) {
+      const cloudId = import.meta.env.VITE_JIRA_COULD_ID || '';
+      if (cloudId) {
+        return `https://${cloudId}.atlassian.net/browse/${encodeURIComponent(
+          key,
+        )}`;
+      }
+    }
+    return selfUrl;
+  } catch {
+    return selfUrl;
+  }
+};

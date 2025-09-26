@@ -20,6 +20,7 @@ import {
   type IssueLocalResponse,
   type IssueRedirectResponse,
 } from '../services/jira.ts';
+import {normalizeJiraUrl} from "../utils/commons.ts";
 
 const statusBadge: Record<string, string> = {
   jira: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300',
@@ -235,7 +236,7 @@ const SubmissionsList: React.FC = () => {
                   {s.issueKey && s.issueUrl && (
                     <div className="mt-1 text-sm">
                       <a
-                        href={s.issueUrl}
+                        href={normalizeJiraUrl(s.issueUrl, s.issueKey)}
                         target="_blank"
                         rel="noreferrer"
                         className="inline-flex items-center gap-1 text-blue-600 hover:underline"
