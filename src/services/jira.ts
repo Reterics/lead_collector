@@ -21,7 +21,7 @@ function currentUrlForRedirect() {
 }
 
 async function callApi(action: string, init: RequestInit): Promise<Response> {
-  const url = `../api.php?action=${encodeURIComponent(action)}`;
+  const url = `../api.php?action=${action}`;
   const resp = await fetch(url, {
     credentials: 'include', // send PHP session cookie
     ...init,
