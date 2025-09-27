@@ -241,13 +241,13 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
     setResult(null);
 
     const baseItem = createBaseItem(schema, values);
-    const attachments: File[] = createAttachments(recordings);
+    const attachments: File[] = createAttachments(schema, recordings);
 
 
     // Step 1: Save to Firestore DB for persistence
     try {
       await saveToFirestore(baseItem)
-      await saveToFirebaseStorage(baseItem, recordings)
+      await saveToFirebaseStorage(baseItem, recordings, schema)
       baseItem.status = 'firestore';
     } catch (e) {
       console.error('Failed to save to Firestore', e);

@@ -1,4 +1,6 @@
 import type { VoiceRecordings } from './submissions/firestore.ts';
+import type { QuestionnaireSchema } from '../pages/Questionnaire.tsx';
+import { convertStringToADF } from '../utils/jira.ts';
 
 export type JiraConfig = {
   projectKey?: string;
@@ -51,12 +53,14 @@ export type CheckConnectionResponse = {
   status?: number;
 };
 
-export const createAttachments = (recordings: VoiceRecordings):File[] => {
+export const createAttachments = (schema: QuestionnaireSchema, recordings: VoiceRecordings):File[] => {
   const attachments: File[] = [];
   for (const [qid, blob] of Object.entries(recordings)) {
     if (blob) {
+      const questionNumber = schema.questions.findIndex(question => question.id === qid);
+      const questionId = questionNumber !== -1 ? (questionNumber + 1) : qid;
       attachments.push(
-        new File([blob], `recording-${qid}-${Date.now()}.webm`, {
+        new File([blob], `question-${questionId}-${Date.now()}.webm`, {
           type: blob.type || 'audio/webm',
         }),
       );
@@ -108,7 +112,7 @@ export const createIssue = async (
       projectKey: cfg.projectKey,
       issueType: cfg.issueType,
       summary: params.summary,
-      description: params.description,
+      description: convertStringToADF(params.description),
     }),
   });
 

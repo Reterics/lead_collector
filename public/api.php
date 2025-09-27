@@ -70,14 +70,7 @@ if ($action === 'create-issue') {
             'project' => ['key' => $projectKey],
             'issuetype' => ['name' => $issueType],
             'summary' => $summary,
-            'description' => [
-                'type' => 'doc',
-                'version' => 1,
-                'content' => [[
-                    'type' => 'paragraph',
-                    'content' => [[ 'type' => 'text', 'text' => $description ]]
-                ]]
-            ],
+            'description' => $description,
         ],
     ];
 
