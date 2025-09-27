@@ -74,6 +74,7 @@ export const resources = {
         title: 'Submissions',
         back: 'Back',
         refresh: 'Refresh',
+        retry: 'Retry',
         empty: 'No submissions recorded yet.',
         status: {
           jira: 'JIRA created',
@@ -160,6 +161,7 @@ export const resources = {
         title: 'Beküldések',
         back: 'Vissza',
         refresh: 'Frissítés',
+        retry: 'Újra',
         empty: 'Még nincs rögzített beküldés.',
         status: {
           jira: 'JIRA létrehozva',

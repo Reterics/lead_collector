@@ -200,7 +200,7 @@ if ($action === 'create-issue') {
   send_json([
     'error' => null,
     'message' => 'Connection stable.'
-  ], 200);
+  ], 202);
 }
 
 http_response_code(404);

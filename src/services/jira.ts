@@ -1,3 +1,5 @@
+import type { VoiceRecordings } from './submissions/firestore.ts';
+
 export type JiraConfig = {
   projectKey?: string;
   issueType?: string;
@@ -42,19 +44,26 @@ export type IssueSuccessResponse = {
   self: string;
 };
 
-export type IssueLocalResponse = {
-  storedLocally: boolean;
-};
-
-export type IssueRedirectResponse = {
-  redirectingToAuth: boolean;
-};
 
 export type CheckConnectionResponse = {
   error: string | null;
   message?: string;
   status?: number;
 };
+
+export const createAttachments = (recordings: VoiceRecordings):File[] => {
+  const attachments: File[] = [];
+  for (const [qid, blob] of Object.entries(recordings)) {
+    if (blob) {
+      attachments.push(
+        new File([blob], `recording-${qid}-${Date.now()}.webm`, {
+          type: blob.type || 'audio/webm',
+        }),
+      );
+    }
+  }
+  return attachments;
+}
 
 export async function checkJiraConnection(): Promise<{ status: number; json: CheckConnectionResponse | null }> {
   try {
@@ -63,7 +72,17 @@ export async function checkJiraConnection(): Promise<{ status: number; json: Che
       credentials: 'include',
     });
     let json: CheckConnectionResponse | null = null;
-    try { json = (await resp.json()) as CheckConnectionResponse; } catch { json = null; }
+    if (resp.status === 200) {
+      return {
+        status: 404,
+        json: {error: 'network_error', message: 'API Unreachable'}
+      }
+    }
+    try {
+      json = (await resp.json()) as CheckConnectionResponse;
+    } catch {
+      json = null;
+    }
     return { status: resp.status, json };
   } catch (e) {
     return { status: 0, json: { error: 'network_error', message: (e as Error)?.message || 'Network error' } };
@@ -74,29 +93,11 @@ export const createIssue = async (
   params: CreateIssueParams,
   _attachments?: File[],
 ): Promise<
-  IssueSuccessResponse | IssueLocalResponse | IssueRedirectResponse
+  IssueSuccessResponse
 > => {
   const cfg = getJiraConfig();
   if (!isConfigured(cfg)) {
-    // fallback: store to localStorage
-    const key = `questionnaire_submission_${Date.now()}`;
-    const data = {
-      createdAt: new Date().toISOString(),
-      params,
-      attachments:
-        _attachments?.map((f) => ({
-          name: f.name,
-          size: f.size,
-          type: f.type,
-        })) || [],
-    };
-    try {
-      localStorage.setItem(key, JSON.stringify(data));
-    } catch {
-      /* ignore quota errors */
-    }
-    console.warn('JIRA not configured. Stored locally under', key);
-    return { storedLocally: true };
+    throw new Error('Jira not configured');
   }
 
   // 1) Create the issue via backend (server handles Bearer + cloudId)
@@ -112,7 +113,7 @@ export const createIssue = async (
   });
 
   if (createResp.status === 401) {
-    return { redirectingToAuth: true as const };
+    throw new Error('Jira not authenticated');
   }
   if (!createResp.ok) {
     const text = await createResp.text();
@@ -134,7 +135,7 @@ export const createIssue = async (
       );
 
       if (upResp.status === 401) {
-        return { redirectingToAuth: true as const };
+        throw new Error('Jira not authenticated');
       }
       if (!upResp.ok) {
         // Don’t fail the entire flow — log only

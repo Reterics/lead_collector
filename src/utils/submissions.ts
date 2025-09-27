@@ -1,4 +1,4 @@
-export type SubmissionStatus = 'jira' | 'local' | 'auth' | 'unknown' | 'error';
+import type { QuestionnaireStatus } from '../services/submissions/firestore.ts';
 
 export type SubmissionEntry = {
   id: string;
@@ -6,7 +6,7 @@ export type SubmissionEntry = {
   questionnaireName: string;
   summary: string;
   description: string;
-  status: SubmissionStatus;
+  status: QuestionnaireStatus;
   issueKey?: string;
   issueUrl?: string;
 };

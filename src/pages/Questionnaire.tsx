@@ -1,16 +1,17 @@
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {
+  createAttachments,
   createIssue,
-  type IssueLocalResponse,
-  type IssueRedirectResponse,
-  type IssueSuccessResponse,
 } from '../services/jira.ts';
 import {saveSubmission} from '../utils/submissions.ts';
-import {firebaseModel} from '../config.ts';
 import {useTranslation} from 'react-i18next';
 import {useNavigate, useParams} from 'react-router-dom';
-import {getDownloadURL, getStorage, ref as storageRef, uploadBytes} from 'firebase/storage';
-import type {CommonCollectionData} from "../services/firebase.tsx";
+import {
+  createBaseItem,
+  saveToFirebaseStorage,
+  saveToFirestore,
+} from '../services/submissions/firestore.ts';
+import { useJiraAuth } from '../context/JiraAuthContext.tsx';
 
 // Types matching the provided JSON format
 export type Question = {
@@ -204,6 +205,7 @@ const TextareaWithRecorder: React.FC<{
 
 export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
   const { t } = useTranslation();
+  const { status } = useJiraAuth();
   const initialState = useMemo(() => {
     const s: Record<string, string | boolean> = {};
     for (const q of schema.questions) {
@@ -232,168 +234,61 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
     setValues((v) => ({ ...v, [id]: value }));
   };
 
-  const submitAudioToFirebase = useCallback(async (baseItem: CommonCollectionData) => {
-    if (baseItem.id) {
-      try {
-        const storage = getStorage(firebaseModel.getApp());
-        const recordingUrls: Record<string, string> = {};
-        for (const [qid, blob] of Object.entries(recordings)) {
-          if (!blob) continue;
-          const path = `submissions/${baseItem.id}/recordings/${qid}-recording-${Date.now()}.webm`;
-          const ref = storageRef(storage, path);
-          await uploadBytes(ref, blob, {
-            contentType: blob.type || 'audio/webm',
-          });
-          recordingUrls[qid] = await getDownloadURL(ref);
-        }
-        if (Object.keys(recordingUrls).length > 0) {
-          baseItem.recordingUrls = recordingUrls;
-          await firebaseModel.update(baseItem, 'submissions');
-        }
-      } catch (uploadErr) {
-        console.error('Failed to upload recordings to Firebase Storage (error path)', uploadErr);
-      }
-    }
-  }, [recordings]);
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
     setResult(null);
 
+    const baseItem = createBaseItem(schema, values);
+    const attachments: File[] = createAttachments(recordings);
+
+
+    // Step 1: Save to Firestore DB for persistence
     try {
-      // build summary and description for JIRA
-      const summary = `${schema.name} response - ${new Date().toLocaleString()}`;
-      const lines: string[] = [];
-      for (const q of schema.questions) {
-        const val = values[q.id];
-        lines.push(
-          `- ${q.name}: ${Array.isArray(val) ? val.join(', ') : String(val)}`,
-        );
-      }
-      const description = lines.join('\n');
-
-      // prepare attachments: include all per-question voice recordings if available
-      const attachments: File[] = [];
-      for (const [qid, blob] of Object.entries(recordings)) {
-        if (blob) {
-          attachments.push(
-            new File([blob], `recording-${qid}-${Date.now()}.webm`, {
-              type: blob.type || 'audio/webm',
-            }),
-          );
-        }
-      }
-
-      const res = await createIssue({ summary, description }, attachments);
-      // Determine status for submissions list
-      let status: 'jira' | 'local' | 'auth' | 'unknown' = 'unknown';
-      let issueKey: string | undefined;
-      let issueUrl: string | undefined;
-      if ((res as IssueSuccessResponse)?.id) {
-        status = 'jira';
-        issueKey = (res as IssueSuccessResponse).key;
-        issueUrl = (res as IssueSuccessResponse).self;
-      } else if ((res as IssueLocalResponse).storedLocally) {
-        status = 'local';
-        setResult('Submission stored locally (JIRA not configured).');
-      } else if ((res as IssueRedirectResponse)?.redirectingToAuth) {
-        status = 'auth';
-        setResult('Redirecting to JIRA authentication...');
-      } else {
-        setResult('Submission sent.');
-      }
-      const id =
-        typeof window !== 'undefined' &&
-        typeof window.crypto?.randomUUID === 'function'
-          ? window.crypto.randomUUID()
-          : `sub_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-
-      // Persist to Firestore regardless of JIRA outcome
-      try {
-        // First create or update a document to obtain an ID
-        const baseItem: CommonCollectionData = {
-          createdAt: new Date().toISOString(),
-          questionnaireName: schema.name,
-          summary,
-          description,
-          status,
-          issueKey,
-          issueUrl,
-          values,
-          questions: schema.questions.map((q) => ({
-            id: q.id,
-            name: q.name,
-            type: q.type,
-          })),
-        } as unknown as CommonCollectionData;
-        // Use update() instead of add() to get an id injected into the object
-        await firebaseModel.update(baseItem, 'submissions');
-
-        // Upload per-question voice recordings, store URL map
-        await submitAudioToFirebase(baseItem)
-      } catch (e) {
-        console.error('Failed to write submission to Firestore', e);
-      }
-
-      // Keep local submissions list behavior
-      if (status !== 'local') {
-        saveSubmission({
-          id,
-          createdAt: new Date().toISOString(),
-          questionnaireName: schema.name,
-          summary,
-          description,
-          status,
-          issueKey,
-          issueUrl,
-        });
-      }
-
-      // Navigate to success page if JIRA issue was created
-      if (status === 'jira' && issueKey) {
-        const successPath = routeId
-          ? `/questionnaires/${routeId}/success`
-          : '/';
-        navigate(successPath, {
-          state: { issueKey, issueUrl, summary },
-          replace: false,
-        });
-      } else if (status === 'local') {
-        setTimeout(() => {
-          navigate('/submissions');
-        }, 2000);
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to submit';
-      setError(msg);
-      // Persist error submission to Firestore
-      try {
-        const baseItem: CommonCollectionData = {
-          createdAt: new Date().toISOString(),
-          questionnaireName: schema.name,
-          summary: `${schema.name} response - ${new Date().toLocaleString()}`,
-          description: Object.entries(values)
-            .map(([k, v]) => `${k}: ${String(v)}`)
-            .join('\n'),
-          status: 'error',
-          error: msg,
-          values,
-          questions: schema.questions.map((q) => ({
-            id: q.id,
-            name: q.name,
-            type: q.type,
-          })),
-        } as unknown as CommonCollectionData;
-        await firebaseModel.update(baseItem, 'submissions');
-
-        await submitAudioToFirebase(baseItem)
-      } catch (e) {
-        console.error('Failed to write error submission to Firestore', e);
-      }
-    } finally {
-      setSubmitting(false);
+      await saveToFirestore(baseItem)
+      await saveToFirebaseStorage(baseItem, recordings)
+      baseItem.status = 'firestore';
+    } catch (e) {
+      console.error('Failed to save to Firestore', e);
     }
+
+    // Step 2: Create issue in JIRA if configured
+    if (status === 202) {
+      try {
+        const res = await createIssue(baseItem, attachments);
+        if (res?.id) {
+          baseItem.status = 'jira';
+          baseItem.issueKey = res.key;
+          baseItem.issueUrl = res.self;
+        }
+      } catch (e) {
+        console.error('Failed to create issue', e);
+      }
+    }
+
+    // Step 3: Save results to LocalStorage as local backup
+    if (baseItem.status === 'created') {
+      baseItem.status = 'local';
+    }
+    saveSubmission(baseItem)
+
+    // Navigate to success page if JIRA issue was created
+    if (baseItem.status === 'jira') {
+      const successPath = routeId
+        ? `/questionnaires/${routeId}/success`
+        : '/';
+      navigate(successPath, {
+        state: baseItem,
+        replace: false,
+      });
+    } else if (baseItem.status === 'local' || baseItem.status === 'firestore') {
+      setTimeout(() => {
+        navigate('/submissions');
+      }, 2000);
+    }
+
+    setSubmitting(false);
   };
 
   return (

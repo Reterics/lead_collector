@@ -13,6 +13,7 @@ import { FirebaseProvider } from './services/firebase.tsx';
 import { ThemeProvider } from './context/ThemeContext.tsx';
 import Footer from './components/Footer.tsx';
 import { useTranslation } from 'react-i18next';
+import { JiraAuthProvider } from './context/JiraAuthContext.tsx';
 
 function QuestionnaireRoute() {
   const { t } = useTranslation();
@@ -66,6 +67,7 @@ function App() {
   return (
     <AuthProvider>
       <ThemeProvider>
+        <JiraAuthProvider>
         <section className="h-screen bg-gray-50 dark:bg-gray-900 pb-12">
           <div className="h-full max-w-3xl mx-auto px-4 pt-6 overflow-y-auto">
             <Routes>
@@ -135,6 +137,7 @@ function App() {
           </div>
           <Footer />
         </section>
+        </JiraAuthProvider>
       </ThemeProvider>
     </AuthProvider>
   );

@@ -17,13 +17,12 @@ import { firebaseModel } from '../config.ts';
 import {
   createIssue,
   type IssueSuccessResponse,
-  type IssueLocalResponse,
-  type IssueRedirectResponse,
 } from '../services/jira.ts';
 import {normalizeJiraUrl} from "../utils/commons.ts";
 
 const statusBadge: Record<string, string> = {
   jira: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300',
+  firebase: 'bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-300',
   local: 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300',
   auth: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300',
   error: 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300',
@@ -107,22 +106,17 @@ const SubmissionsList: React.FC = () => {
 
   const onRetry = async (s: SubmissionEntry) => {
     setRetrying((r) => ({ ...r, [s.id]: true }));
+    let issueKey: string | undefined = s.issueKey;
+    let issueUrl: string | undefined = s.issueUrl;
+    let nextStatus: SubmissionEntry['status'] = 'firestore';
     try {
-      const res = await createIssue({ summary: s.summary, description: s.description });
-
-      let nextStatus: SubmissionEntry['status'] = s.status;
-      let issueKey: string | undefined = s.issueKey;
-      let issueUrl: string | undefined = s.issueUrl;
-
-      if ((res as IssueSuccessResponse)?.id) {
-        nextStatus = 'jira';
-        issueKey = (res as IssueSuccessResponse).key;
-        issueUrl = (res as IssueSuccessResponse).self;
-      } else if ((res as IssueRedirectResponse)?.redirectingToAuth) {
-        nextStatus = 'auth';
-        // Navigation will redirect; we still update local/Firestore best-effort
-      } else if ((res as IssueLocalResponse)?.storedLocally) {
-        nextStatus = 'local';
+      if (!issueKey) {
+        const res = await createIssue({ summary: s.summary, description: s.description });
+        if ((res as IssueSuccessResponse)?.id) {
+          nextStatus = 'jira';
+          issueKey = (res as IssueSuccessResponse).key;
+          issueUrl = (res as IssueSuccessResponse).self;
+        }
       }
 
       // Update Firestore record if exists
@@ -156,14 +150,6 @@ const SubmissionsList: React.FC = () => {
       // Refresh list to reflect the updated state
       refresh();
     } catch {
-      await firebaseModel.update(
-        {
-          id: s.id,
-          status: 'error',
-        },
-        'submissions',
-      );
-      saveSubmission({ ...s, status: 'error' });
       refresh();
     } finally {
       setRetrying((r) => ({ ...r, [s.id]: false }));
@@ -219,7 +205,6 @@ const SubmissionsList: React.FC = () => {
                       {s.status === 'jira' && t('submissions.status.jira')}
                       {s.status === 'local' && t('submissions.status.local')}
                       {s.status === 'auth' && t('submissions.status.auth')}
-                      {s.status === 'error' && t('submissions.status.error')}
                       {s.status === 'unknown' &&
                         t('submissions.status.unknown')}
                     </span>
@@ -257,7 +242,7 @@ const SubmissionsList: React.FC = () => {
                   </details>
                 </div>
                 <div className="flex flex-col items-center gap-2">
-                  {(s.status === 'local' || s.status === 'error') && (
+                  {(s.status === 'local' || s.status === 'jira' || s.status === 'created') && (
                     <button
                       onClick={() => onRetry(s)}
                       disabled={!!retrying[s.id]}
