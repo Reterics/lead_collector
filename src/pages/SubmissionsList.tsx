@@ -114,8 +114,8 @@ const SubmissionsList: React.FC = () => {
         const res = await createIssue({ summary: s.summary, description: s.description });
         if ((res as IssueSuccessResponse)?.id) {
           nextStatus = 'jira';
-          issueKey = (res as IssueSuccessResponse).key;
-          issueUrl = (res as IssueSuccessResponse).self;
+          issueKey = res.key;
+          issueUrl = res.self;
         }
       }
 
@@ -242,7 +242,7 @@ const SubmissionsList: React.FC = () => {
                   </details>
                 </div>
                 <div className="flex flex-col items-center gap-2">
-                  {(s.status === 'local' || s.status === 'jira' || s.status === 'created') && (
+                  {(s.status === 'local' || s.status === 'created') && (
                     <button
                       onClick={() => onRetry(s)}
                       disabled={!!retrying[s.id]}

@@ -257,10 +257,14 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
     if (status === 202) {
       try {
         const res = await createIssue(baseItem, attachments);
+        const firestoreSaved = baseItem.status === 'firestore';
         if (res?.id) {
           baseItem.status = 'jira';
           baseItem.issueKey = res.key;
           baseItem.issueUrl = res.self;
+          if (firestoreSaved) {
+            await saveToFirestore(baseItem)
+          }
         }
       } catch (e) {
         console.error('Failed to create issue', e);
