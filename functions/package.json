@@ -1,0 +1,25 @@
+{
+  "name": "lead_collector_gcp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Reterics/lead_collector.git"
+  },
+  "private": true,
+  "dependencies": {
+    "@google-cloud/speech": "^7.2.0",
+    "busboy": "^1.6.0",
+    "cors": "^2.8.5",
+    "firebase-admin": "^13.5.0",
+    "firebase-functions": "^6.4.0"
+  },
+  "devDependencies": {
+    "@types/busboy": "^1.5.4",
+    "typescript": "^5.9.2"
+  }
+}

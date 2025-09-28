@@ -67,4 +67,28 @@ export const getById = (id: string, table: string) => {
   return firebaseModel.get(id, table);
 };
 
+/**
+ * Build the Cloud Functions base URL.
+ * Priority:
+ * 1) Explicit VITE_FUNCTIONS_BASE (custom domain / reverse proxy)
+ * 2) Emulator (if enabled)
+ * 3) Default Google Functions hostname using region + project
+ */
+export function getFunctionsBaseUrl() {
+  if (import.meta.env.VITE_FUNCTIONS_BASE) return import.meta.env.VITE_FUNCTIONS_BASE;
+
+  const region = import.meta.env.VITE_FUNCTION_REGION || "us-central1";
+  const project = import.meta.env.VITE_FIREBASE_PROJECT_ID;
+
+  if (import.meta.env.VITE_USE_EMULATORS === "true") {
+    const host = import.meta.env.VITE_FUNCTIONS_EMULATOR_HOST || "localhost";
+    const port = import.meta.env.VITE_FUNCTIONS_EMULATOR_PORT || "5001";
+    // Emulator path is: http://localhost:5001/<project>/<region>
+    return `http://${host}:${port}/${project}/${region}`;
+  }
+
+  // Default public Functions domain
+  return `https://${region}-${project}.cloudfunctions.net`;
+}
+
 export default app;
