@@ -187,6 +187,11 @@ if ($action === 'create-issue') {
         'status' => $code,
         'message' => 'Jira responded with an error.'
       ], $code);
+    } else if ($code !== 200 && $code !== 201){
+      send_json([
+        'status' => $code,
+        'message' => 'Connection status.' . $code
+      ], $code);
     }
   }
 

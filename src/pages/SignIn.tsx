@@ -15,7 +15,7 @@ const SignInComponent = () => {
   const [password, setPassword] = useState('');
 
   return (
-    <section className="bg-gray-50 dark:bg-gray-900 min-h-screen flex items-center justify-center">
+    <section className="bg-gray-50 dark:bg-gray-900 fixed inset-0 z-50 grid place-items-center">
       <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto w-full max-w-md">
         <a
           href="?page=about"
@@ -37,7 +37,7 @@ const SignInComponent = () => {
           )}
 
           {loading ? (
-            <div role="status" className="text-center">
+            <div role="status" className="text-center place-items-center">
               <svg
                 aria-hidden="true"
                 className="w-8 h-8 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600"
