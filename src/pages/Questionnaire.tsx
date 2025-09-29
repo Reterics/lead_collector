@@ -222,6 +222,11 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
   const [error, setError] = useState<string | null>(null);
   const [recordings, setRecordings] = useState<Record<string, Blob | null>>({});
 
+  // Split-button dropdown state
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuOpenUp, setMenuOpenUp] = useState(false);
+  const splitRef = useRef<HTMLDivElement | null>(null);
+
   const navigate = useNavigate();
   const { id: routeId } = useParams<{ id: string }>();
 
@@ -230,12 +235,43 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
     setValues(initialState);
   }, [initialState]);
 
+  // Close dropdown on outside click or Escape
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      if (splitRef.current && !splitRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', onDocClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDocClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, []);
+
+  const toggleMenu = () => {
+    setMenuOpen((prev) => {
+      const next = !prev;
+      if (!prev) {
+        const rect = splitRef.current?.getBoundingClientRect();
+        if (rect) {
+          const spaceBelow = window.innerHeight - rect.bottom;
+          setMenuOpenUp(spaceBelow < 180);
+        }
+      }
+      return next;
+    });
+  };
+
   const onChange = (id: string, value: string | boolean) => {
     setValues((v) => ({ ...v, [id]: value }));
   };
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const submit = async (opts?: { skipJira?: boolean }) => {
     setSubmitting(true);
     setError(null);
     setResult(null);
@@ -253,8 +289,8 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
       console.error('Failed to save to Firestore', e);
     }
 
-    // Step 2: Create issue in JIRA if configured
-    if (status === 202) {
+    // Step 2: Create issue in JIRA if configured and not skipped
+    if (!opts?.skipJira && status === 202) {
       try {
         const res = await createIssue(baseItem, attachments);
         const firestoreSaved = baseItem.status === 'firestore';
@@ -263,7 +299,7 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
           baseItem.issueKey = res.key;
           baseItem.issueUrl = res.self;
           if (firestoreSaved) {
-            await saveToFirestore(baseItem)
+            await saveToFirestore(baseItem);
           }
         }
       } catch (e) {
@@ -293,6 +329,11 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
     }
 
     setSubmitting(false);
+  };
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await submit({ skipJira: false });
   };
 
   return (
@@ -394,14 +435,49 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
           </div>
         ))}
 
-        <div className="pt-2">
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            {submitting ? t('questionnaire.sending') : t('questionnaire.send')}
-          </button>
+        <div className="pt-2 justify-self-end mb-2">
+          <div ref={splitRef} className="relative inline-flex items-stretch w-full sm:w-auto">
+            <button
+              type="button"
+              disabled={submitting}
+              onClick={() => submit({ skipJira: false })}
+              className="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2.5 rounded-l-md rounded-r-none bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              {submitting ? (t('questionnaire.sending') || 'Sending...') : (t('questionnaire.send') || 'Send')}
+            </button>
+            <button
+              type="button"
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+              disabled={submitting}
+              onClick={toggleMenu}
+              className="px-3 py-2.5 rounded-r-md rounded-l-none border-l border-blue-500 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              title={t('questionnaire.more_options') || 'More options'}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.108l3.71-3.878a.75.75 0 111.08 1.04l-4.24 4.432a.75.75 0 01-1.08 0L5.25 8.27a.75.75 0 01-.02-1.06z" clipRule="evenodd" />
+              </svg>
+            </button>
+
+            {menuOpen && (
+              <div
+                role="menu"
+                aria-label={t('questionnaire.send_options') || 'Send options'}
+                className={`absolute z-20 right-0 ${menuOpenUp ? 'bottom-full mb-2' : 'top-full mt-2'} w-56 overflow-hidden rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg`}
+              >
+                <div className="py-1">
+                  <button
+                    role="menuitem"
+                    type="button"
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    onClick={() => { setMenuOpen(false); submit({ skipJira: true }); }}
+                  >
+                    {t('questionnaire.send_without_jira') || 'Send without JIRA'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {error && (

@@ -69,6 +69,7 @@ export const resources = {
         stop: 'Stop',
         send: 'Send',
         sending: 'Sending...',
+        send_without_jira: 'Send without JIRA',
       },
       submissions: {
         title: 'Submissions',
@@ -156,6 +157,7 @@ export const resources = {
         stop: 'Leállítás',
         send: 'Küldés',
         sending: 'Küldés...',
+        send_without_jira: 'Küldés JIRA nélkül',
       },
       submissions: {
         title: 'Beküldések',
