@@ -12,6 +12,7 @@ import {
   saveToFirestore,
 } from '../services/submissions/firestore.ts';
 import { useJiraAuth } from '../context/JiraAuthContext.tsx';
+import { transcribeViaFunction } from '../utils/transcribeClient.ts';
 
 // Types matching the provided JSON format
 export type Question = {
@@ -125,11 +126,30 @@ const TextareaWithRecorder: React.FC<{
 }> = ({ value, onChange, onRecordingChange }) => {
   const { t } = useTranslation();
   const voice = useVoiceRecorder();
+  const [transcribing, setTranscribing] = useState(false);
+  const [transcribeError, setTranscribeError] = useState<string | null>(null);
 
   useEffect(() => {
     onRecordingChange(voice.audioBlob);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [voice.audioBlob]);
+
+  const doTranscribeGcs = async () => {
+    if (!voice.audioBlob) return;
+    try {
+      setTranscribeError(null);
+      setTranscribing(true);
+      const file = new File([voice.audioBlob], "audio.webm", { type: voice.audioBlob.type || 'audio/webm' });
+      const { transcript } = await transcribeViaFunction(file, 'en-US');
+      const newValue = value ? (value.trim() ? value + "\n" + transcript : transcript) : transcript;
+      onChange(newValue);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Transcription failed';
+      setTranscribeError(msg);
+    } finally {
+      setTranscribing(false);
+    }
+  };
 
   return (
     <div className="mt-1">
@@ -184,10 +204,23 @@ const TextareaWithRecorder: React.FC<{
             ⏹️ {t('questionnaire.stop')}
           </button>
         )}
+        <button
+          type="button"
+          onClick={doTranscribeGcs}
+          disabled={!voice.audioBlob || transcribing}
+          className={`px-3 py-1.5 text-sm rounded-md text-white focus:outline-none focus:ring-2 ${!voice.audioBlob || transcribing ? 'bg-blue-400/50 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'}`}
+        >
+          {transcribing ? (t('questionnaire.transcribing') || 'Transcribing...') : (t('questionnaire.transcribe_gcs') || 'Transcribe (GCS)')}
+        </button>
 
         {voice.error && (
           <span className="text-xs text-red-600 dark:text-red-400">
             {voice.error}
+          </span>
+        )}
+        {transcribeError && (
+          <span className="text-xs text-red-600 dark:text-red-400">
+            {transcribeError}
           </span>
         )}
 

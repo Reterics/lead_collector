@@ -70,6 +70,8 @@ export const resources = {
         send: 'Send',
         sending: 'Sending...',
         send_without_jira: 'Send without JIRA',
+        transcribe_gcs: 'Transcribe (GCS)',
+        transcribing: 'Transcribing...'
       },
       submissions: {
         title: 'Submissions',
@@ -158,6 +160,8 @@ export const resources = {
         send: 'Küldés',
         sending: 'Küldés...',
         send_without_jira: 'Küldés JIRA nélkül',
+        transcribe_gcs: 'Átirat készítése (GCS)',
+        transcribing: 'Átirat készítése...'
       },
       submissions: {
         title: 'Beküldések',
