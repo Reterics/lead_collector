@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { checkJiraConnection } from '../services/jira.ts';
 import { AuthContext } from './AuthContext.tsx';
+import {baseUrl} from "../utils/commons.ts";
 
 type JiraStatus = number | null; // 200 OK, 401 unauth, 0 error, null unknown
 type Ctx = {
@@ -26,7 +27,7 @@ export function JiraAuthProvider({
 
   const authUrl = useMemo(() => {
     const redirect = encodeURIComponent(window.location.href);
-    return `../auth.php?action=start&redirect=${redirect}`;
+    return baseUrl(`auth.php?action=start&redirect=${redirect}`);
   }, []);
 
   const refresh = async () => {

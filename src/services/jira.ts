@@ -1,6 +1,7 @@
 import type { VoiceRecordings } from './submissions/firestore.ts';
 import type { QuestionnaireSchema } from '../pages/Questionnaire.tsx';
 import { convertStringToADF } from '../utils/jira.ts';
+import {baseUrl} from "../utils/commons.ts";
 
 export type JiraConfig = {
   projectKey?: string;
@@ -25,7 +26,7 @@ function currentUrlForRedirect() {
 }
 
 async function callApi(action: string, init: RequestInit): Promise<Response> {
-  const url = `../api.php?action=${action}`;
+  const url = baseUrl(`api.php?action=${action}`);
   const resp = await fetch(url, {
     credentials: 'include', // send PHP session cookie
     ...init,
@@ -33,7 +34,7 @@ async function callApi(action: string, init: RequestInit): Promise<Response> {
 
   // If not authenticated, kick off OAuth 3LO
   if (resp.status === 401) {
-    window.location.href = `../auth.php?action=start&redirect=${currentUrlForRedirect()}`;
+    window.location.href = baseUrl(`auth.php?action=start&redirect=${currentUrlForRedirect()}`);
     // Return a Response-like object to keep types happy if caller awaits
     // but effectively the navigation above takes over.
   }
@@ -71,7 +72,7 @@ export const createAttachments = (schema: QuestionnaireSchema, recordings: Voice
 
 export async function checkJiraConnection(): Promise<{ status: number; json: CheckConnectionResponse | null }> {
   try {
-    const resp = await fetch(`../api.php?action=check-connection`, {
+    const resp = await fetch(baseUrl(`api.php?action=check-connection`), {
       method: 'GET',
       credentials: 'include',
     });
