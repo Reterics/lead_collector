@@ -14,6 +14,7 @@ import { ThemeProvider } from './context/ThemeContext.tsx';
 import Footer from './components/Footer.tsx';
 import { useTranslation } from 'react-i18next';
 import { JiraAuthProvider } from './context/JiraAuthContext.tsx';
+import Terms from './pages/Terms.tsx';
 
 function QuestionnaireRoute() {
   const { t } = useTranslation();
@@ -132,6 +133,7 @@ function App() {
                   </AuthenticatedRoute>
                 }
               />
+              <Route path="/terms" element={<Terms />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </div>

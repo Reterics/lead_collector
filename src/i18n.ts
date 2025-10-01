@@ -71,7 +71,10 @@ export const resources = {
         sending: 'Sending...',
         send_without_jira: 'Send without JIRA',
         transcribe_gcs: 'Transcribe (GCS)',
-        transcribing: 'Transcribing...'
+        transcribing: 'Transcribing...',
+        accept_terms_text: 'I accept the',
+        terms_link: 'Terms and Conditions',
+        accept_terms_error: 'You must accept the Terms and Conditions to proceed.'
       },
       submissions: {
         title: 'Submissions',
@@ -90,6 +93,11 @@ export const resources = {
         details: 'Details',
         delete: 'Delete',
         confirmDelete: 'Delete this submission record?',
+      },
+      terms: {
+        title: 'Terms and Conditions',
+        intro: 'These Terms and Conditions govern the use of this application.',
+        placeholder: 'Please review these terms carefully. By proceeding you agree to be bound by them.'
       },
     },
   },
@@ -161,7 +169,10 @@ export const resources = {
         sending: 'Küldés...',
         send_without_jira: 'Küldés JIRA nélkül',
         transcribe_gcs: 'Átirat készítése (GCS)',
-        transcribing: 'Átirat készítése...'
+        transcribing: 'Átirat készítése...',
+        accept_terms_text: 'Elfogadom a',
+        terms_link: 'Felhasználási feltételeket',
+        accept_terms_error: 'A folytatáshoz el kell fogadnia a felhasználási feltételeket.'
       },
       submissions: {
         title: 'Beküldések',
@@ -180,6 +191,11 @@ export const resources = {
         details: 'Részletek',
         delete: 'Törlés',
         confirmDelete: 'Törli ezt a beküldési rekordot?',
+      },
+      terms: {
+        title: 'Felhasználási feltételek',
+        intro: 'Ezek a felhasználási feltételek szabályozzák az alkalmazás használatát.',
+        placeholder: 'Kérjük, figyelmesen olvassa el a feltételeket. A folytatással elfogadja azokat.'
       },
     },
   },

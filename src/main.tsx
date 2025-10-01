@@ -5,9 +5,13 @@ import App from './App.tsx';
 import './i18n';
 import { BrowserRouter } from 'react-router-dom';
 
+const baseName = import.meta.env.DEV
+  ? '/'
+  : import.meta.env.VITE_BASENAME || '/';
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename={baseName}>
       <App />
     </BrowserRouter>
   </StrictMode>,

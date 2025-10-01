@@ -245,6 +245,8 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
       if (q.type === 'checkbox') s[q.id] = false;
       else s[q.id] = '';
     }
+    // Terms acceptance checkbox default
+    s['accept_terms'] = false;
     return s;
   }, [schema]);
 
@@ -308,6 +310,13 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
     setSubmitting(true);
     setError(null);
     setResult(null);
+
+    // Enforce Terms and Conditions acceptance
+    if (!values['accept_terms']) {
+      setError(t('questionnaire.accept_terms_error') || 'You must accept the Terms and Conditions to proceed.');
+      setSubmitting(false);
+      return;
+    }
 
     const baseItem = createBaseItem(schema, values);
     const attachments: File[] = createAttachments(schema, recordings);
@@ -377,6 +386,23 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
         </h2>
       </div>
       <form onSubmit={onSubmit} className="space-y-5">
+        {/* Terms and Conditions acceptance */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-white to-slate-50 dark:from-gray-800 dark:to-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
+          <label className="inline-flex items-start gap-3">
+            <input
+              type="checkbox"
+              checked={!!values['accept_terms']}
+              onChange={(e) => onChange('accept_terms', e.target.checked)}
+              className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <span className="text-sm text-gray-800 dark:text-gray-100">
+              {t('questionnaire.accept_terms_text') || 'I accept the'}{' '}
+              <a href="/terms" className="text-blue-600 underline" target="_blank" rel="noreferrer">
+                {t('questionnaire.terms_link') || 'Terms and Conditions'}
+              </a>
+            </span>
+          </label>
+        </div>
         {schema.questions.map((q) => (
           <div
             key={q.id}
