@@ -8,6 +8,7 @@ export const resources = {
       app: {
         title: 'Lead Collector',
         back: 'Back',
+        goHome: 'Go to Home',
         notFound: 'Questionnaire not found',
         notFoundDesc: 'The requested questionnaire "{{id}}" does not exist.',
       },
@@ -99,6 +100,12 @@ export const resources = {
         intro: 'These Terms and Conditions govern the use of this application.',
         placeholder: 'Please review these terms carefully. By proceeding you agree to be bound by them.'
       },
+      success: {
+        title: 'JIRA issue created successfully',
+        summary: 'Summary',
+        submitted: 'Your request has been submitted.',
+        issue: 'Issue'
+      },
     },
   },
   hu: {
@@ -106,6 +113,7 @@ export const resources = {
       app: {
         title: 'Lead Gyűjtő',
         back: 'Vissza',
+        goHome: 'Ugrás a főoldalra',
         notFound: 'Kérdőív nem található',
         notFoundDesc: 'A kért kérdőív ("{{id}}") nem létezik.',
       },
@@ -196,6 +204,12 @@ export const resources = {
         title: 'Felhasználási feltételek',
         intro: 'Ezek a felhasználási feltételek szabályozzák az alkalmazás használatát.',
         placeholder: 'Kérjük, figyelmesen olvassa el a feltételeket. A folytatással elfogadja azokat.'
+      },
+      success: {
+        title: 'JIRA feladat sikeresen létrehozva',
+        summary: 'Összegzés',
+        submitted: 'Kérelmét elküldtük.',
+        issue: 'Feladat'
       },
     },
   },

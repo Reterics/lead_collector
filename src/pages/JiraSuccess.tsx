@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import {normalizeJiraUrl} from "../utils/commons.ts";
+import { useTranslation } from 'react-i18next';
+import { normalizeJiraUrl } from "../utils/commons.ts";
 
 export type JiraSuccessState = {
   issueKey?: string;
@@ -12,6 +13,7 @@ const JiraSuccess: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
+  const { t } = useTranslation();
   const state = (location.state || {}) as JiraSuccessState;
 
   const issueKey = state.issueKey;
@@ -23,20 +25,20 @@ const JiraSuccess: React.FC = () => {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
       <h2 className="text-2xl font-semibold text-green-700 dark:text-green-400 mb-2">
-        JIRA issue created successfully
+        {t('success.title')}
       </h2>
       <p className="text-gray-700 dark:text-gray-300 mb-4">
         {summary ? (
           <>
-            <span className="font-medium">Summary:</span> {summary}
+            <span className="font-medium">{t('success.summary')}:</span> {summary}
           </>
         ) : (
-          'Your request has been submitted.'
+          t('success.submitted')
         )}
       </p>
       {issueKey && (
         <p className="text-gray-800 dark:text-gray-200 mb-2">
-          <span className="font-medium">Issue:</span> {issueKey}
+          <span className="font-medium">{t('success.issue')}:</span> {issueKey}
         </p>
       )}
       {issueUrl && (
@@ -47,7 +49,7 @@ const JiraSuccess: React.FC = () => {
             rel="noreferrer"
             className="text-blue-600 hover:underline"
           >
-            Open in JIRA ↗
+            {t('submissions.openInJira')} ↗
           </a>
         </p>
       )}
@@ -58,13 +60,13 @@ const JiraSuccess: React.FC = () => {
           onClick={() => navigate(backTarget)}
           className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800"
         >
-          ← Back
+          ← {t('app.back')}
         </button>
         <Link
           to="/"
           className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white"
         >
-          Go to Home
+          {t('app.goHome')}
         </Link>
       </div>
     </div>

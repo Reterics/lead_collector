@@ -5,7 +5,7 @@ import {
 } from '../services/jira.ts';
 import {saveSubmission} from '../utils/submissions.ts';
 import {useTranslation} from 'react-i18next';
-import {useNavigate, useParams} from 'react-router-dom';
+import {useNavigate, useParams, Link} from 'react-router-dom';
 import {
   createBaseItem,
   saveToFirebaseStorage,
@@ -397,9 +397,9 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
             />
             <span className="text-sm text-gray-800 dark:text-gray-100">
               {t('questionnaire.accept_terms_text') || 'I accept the'}{' '}
-              <a href="/terms" className="text-blue-600 underline" target="_blank" rel="noreferrer">
+              <Link to="/terms" className="text-blue-600 underline">
                 {t('questionnaire.terms_link') || 'Terms and Conditions'}
-              </a>
+              </Link>
             </span>
           </label>
         </div>
