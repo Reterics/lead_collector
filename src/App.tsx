@@ -16,6 +16,7 @@ import Footer from './components/Footer.tsx';
 import { useTranslation } from 'react-i18next';
 import { JiraAuthProvider } from './context/JiraAuthContext.tsx';
 import Terms from './pages/Terms.tsx';
+import { SubmissionsProvider } from './context/SubmissionsContext.tsx';
 
 function QuestionnaireRoute() {
   const { t } = useTranslation();
@@ -129,7 +130,9 @@ function App() {
                 element={
                   <AuthenticatedRoute>
                     <FirebaseProvider>
-                      <SubmissionsList />
+                      <SubmissionsProvider>
+                        <SubmissionsList />
+                      </SubmissionsProvider>
                     </FirebaseProvider>
                   </AuthenticatedRoute>
                 }
@@ -139,7 +142,9 @@ function App() {
                 element={
                   <AuthenticatedRoute>
                     <FirebaseProvider>
-                      <SubmissionsDesktop />
+                      <SubmissionsProvider>
+                        <SubmissionsDesktop />
+                      </SubmissionsProvider>
                     </FirebaseProvider>
                   </AuthenticatedRoute>
                 }

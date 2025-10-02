@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {useTranslation} from 'react-i18next';
 import {
@@ -10,10 +10,9 @@ import {
   FiSmartphone,
   FiArrowLeft,
 } from 'react-icons/fi';
-import {firebaseModel} from '../../config.ts';
-import {createIssue, type IssueSuccessResponse} from '../../services/jira.ts';
-import {loadSubmissions, removeSubmission, saveSubmission, type SubmissionEntry} from '../../utils/submissions.ts';
 import {normalizeJiraUrl} from '../../utils/commons.ts';
+import type { SubmissionEntry } from '../../utils/submissions.ts';
+import { useSubmissionsContext } from '../../context/SubmissionsContext.tsx';
 
 const statusBadge: Record<string, string> = {
   jira: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300',
@@ -55,94 +54,12 @@ const Modal: React.FC<{ open: boolean; onClose: () => void; title?: string } & R
 
 const SubmissionsDesktop: React.FC = () => {
   const { t } = useTranslation();
-  const [items, setItems] = useState<SubmissionEntry[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [retrying, setRetrying] = useState<Record<string, boolean>>({});
+  const { sorted, loading, retrying, refresh, onRetry, onDelete } = useSubmissionsContext();
   const [selected, setSelected] = useState<SubmissionEntry | null>(null);
 
-  const sorted = useMemo(() => {
-    return [...items].sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
-  }, [items]);
-
-  const fetchFromFirestore = async () => {
-    try {
-      const fsItems = (await firebaseModel.getAll('submissions', true)) as unknown as Array<{
-        id: string;
-        createdAt?: string;
-        questionnaireName?: string;
-        summary?: string;
-        description?: string;
-        status?: string;
-        issueKey?: string;
-        issueUrl?: string;
-      }>;
-      const mapped: SubmissionEntry[] = (fsItems || []).map((d) => ({
-        id: d.id,
-        createdAt: d.createdAt || new Date().toISOString(),
-        questionnaireName: d.questionnaireName || 'Unknown',
-        summary: d.summary || '',
-        description: d.description || '',
-        status: (d.status as SubmissionEntry['status']) || 'unknown',
-        issueKey: d.issueKey,
-        issueUrl: d.issueUrl,
-      }));
-      const local = loadSubmissions();
-      const map = new Map<string, SubmissionEntry>();
-      for (const s of local) map.set(s.id, s);
-      for (const m of mapped) map.set(m.id, m);
-      setItems(Array.from(map.values()));
-    } catch (e) {
-      console.error('Failed to load submissions from Firestore', e);
-      setItems(loadSubmissions());
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { void fetchFromFirestore(); }, []);
-
-  const refresh = () => { setLoading(true); void fetchFromFirestore(); };
-
-  const onDelete = async (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm(t('submissions.confirmDelete'))) {
-      await firebaseModel.remove(id, 'submissions');
-      removeSubmission(id);
-      refresh();
-    }
-  };
-
-  const onRetry = async (s: SubmissionEntry) => {
-    setRetrying((r) => ({ ...r, [s.id]: true }));
-    let issueKey: string | undefined = s.issueKey;
-    let issueUrl: string | undefined = s.issueUrl;
-    let nextStatus: SubmissionEntry['status'] = 'firestore';
-    try {
-      if (!issueKey) {
-        const res = await createIssue({ summary: s.summary, description: s.description });
-        if ((res as IssueSuccessResponse)?.id) {
-          nextStatus = 'jira';
-          issueKey = (res as IssueSuccessResponse).key;
-          issueUrl = (res as IssueSuccessResponse).self;
-        }
-      }
-      try {
-        await firebaseModel.update({
-          id: s.id,
-          createdAt: s.createdAt,
-          questionnaireName: s.questionnaireName,
-          summary: s.summary,
-          description: s.description,
-          status: nextStatus,
-          issueKey,
-          issueUrl,
-        }, 'submissions');
-      } catch (e) { void e; }
-      saveSubmission({ ...s, status: nextStatus, issueKey, issueUrl });
-      refresh();
-    } catch {
-      refresh();
-    } finally {
-      setRetrying((r) => ({ ...r, [s.id]: false }));
+      await onDelete(id);
     }
   };
 
@@ -223,7 +140,7 @@ const SubmissionsDesktop: React.FC = () => {
                           <span className="hidden lg:inline">{(retrying[s.id] ? t('submissions.retrying') : t('submissions.retry')) as string}</span>
                         </button>
                       )}
-                      <button onClick={() => onDelete(s.id)} className="inline-flex items-center gap-2 px-3 py-1.5 text-sm rounded-md bg-red-600 text-white hover:bg-red-700" title={t('submissions.delete')}>
+                      <button onClick={() => handleDelete(s.id)} className="inline-flex items-center gap-2 px-3 py-1.5 text-sm rounded-md bg-red-600 text-white hover:bg-red-700" title={t('submissions.delete')}>
                         <FiTrash2 />
                         <span className="hidden lg:inline">{t('submissions.delete')}</span>
                       </button>
@@ -267,7 +184,7 @@ const SubmissionsDesktop: React.FC = () => {
                   <FiRefreshCcw /> {(retrying[selected.id] ? t('submissions.retrying') : t('submissions.retry')) as string}
                 </button>
               )}
-              <button onClick={() => { onDelete(selected.id); setSelected(null); }} className="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-md bg-red-600 text-white hover:bg-red-700">
+              <button onClick={() => { handleDelete(selected.id); setSelected(null); }} className="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-md bg-red-600 text-white hover:bg-red-700">
                 <FiTrash2 /> {t('submissions.delete')}
               </button>
               <button onClick={() => setSelected(null)} className="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-md bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white">
