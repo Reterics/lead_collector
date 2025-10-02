@@ -1,7 +1,15 @@
 import React, {useEffect, useMemo, useState} from 'react';
 import { Link } from 'react-router-dom';
 import {useTranslation} from 'react-i18next';
-import {FiRefreshCcw, FiTrash2, FiEye, FiX, FiExternalLink, FiSmartphone} from 'react-icons/fi';
+import {
+  FiRefreshCcw,
+  FiTrash2,
+  FiEye,
+  FiX,
+  FiExternalLink,
+  FiSmartphone,
+  FiArrowLeft,
+} from 'react-icons/fi';
 import {firebaseModel} from '../../config.ts';
 import {createIssue, type IssueSuccessResponse} from '../../services/jira.ts';
 import {loadSubmissions, removeSubmission, saveSubmission, type SubmissionEntry} from '../../utils/submissions.ts';
@@ -139,19 +147,36 @@ const SubmissionsDesktop: React.FC = () => {
   };
 
   return (
-    <div className="w-full">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t('submissions.title')}</h2>
+    <>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-blue-600 hover:underline"
+            title={t('submissions.back')}
+          >
+            <FiArrowLeft />
+            <span>{t('submissions.back')}</span>
+          </Link>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+            {t('submissions.title')}
+          </h1>
+        </div>
         <div className="flex items-center gap-2">
           <Link
             to="/submissions"
             className="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700"
-            title={t('submissions.mobileView')}
+            title={t('submissions.desktopView')}
           >
             <FiSmartphone />
             <span className="hidden sm:inline">{t('submissions.mobileView')}</span>
           </Link>
-          <button onClick={refresh} disabled={loading} className="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-md bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white" title={t('submissions.refresh')}>
+          <button
+            onClick={refresh}
+            disabled={loading}
+            className="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-md bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
+            title={t('submissions.refresh')}
+          >
             <FiRefreshCcw />
             <span className="hidden sm:inline">{t('submissions.refresh')}</span>
           </button>
@@ -252,7 +277,7 @@ const SubmissionsDesktop: React.FC = () => {
           </div>
         )}
       </Modal>
-    </div>
+    </>
   );
 };
 
