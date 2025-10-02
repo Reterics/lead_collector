@@ -11,6 +11,7 @@ import {
   FiRefreshCcw,
   FiArrowLeft,
   FiExternalLink,
+  FiMonitor,
 } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import { firebaseModel } from '../config.ts';
@@ -173,6 +174,14 @@ const SubmissionsList: React.FC = () => {
           </h1>
         </div>
         <div className="flex items-center gap-2">
+          <Link
+            to="/submissions/desktop"
+            className="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700"
+            title={t('submissions.desktopView')}
+          >
+            <FiMonitor />
+            <span className="hidden sm:inline">{t('submissions.desktopView')}</span>
+          </Link>
           <button
             onClick={refresh}
             disabled={loading}
@@ -205,6 +214,7 @@ const SubmissionsList: React.FC = () => {
                       {s.status === 'jira' && t('submissions.status.jira')}
                       {s.status === 'local' && t('submissions.status.local')}
                       {s.status === 'auth' && t('submissions.status.auth')}
+                      {s.status === 'firestore' && t('submissions.status.firestore')}
                       {s.status === 'unknown' &&
                         t('submissions.status.unknown')}
                     </span>

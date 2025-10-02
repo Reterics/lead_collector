@@ -51,7 +51,13 @@ const formatDescription = (
 };
 
 export const createBaseItem = (schema: QuestionnaireSchema, values: Answers): BaseItem => {
-  const summary = `${schema.name} response - ${new Date().toLocaleString()}`;
+  // Use the first text input's value as the JIRA title (summary) when available
+  const firstTextQuestion = schema.questions.find((q) => q.type === 'text');
+  const firstTextValueRaw = firstTextQuestion?.id ? values[firstTextQuestion.id] : undefined;
+  const firstTextValue = typeof firstTextValueRaw === 'string' ? firstTextValueRaw.trim() : '';
+  const fallbackSummary = `${schema.name} response - ${new Date().toLocaleString()}`;
+  const summary = firstTextValue || fallbackSummary;
+
   const description = formatDescription(schema.questions, values);
 
   const id =

@@ -324,11 +324,12 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
 
     // Step 1: Save to Firestore DB for persistence
     try {
+      baseItem.status = 'firestore';
       await saveToFirestore(baseItem)
       await saveToFirebaseStorage(baseItem, recordings, schema)
-      baseItem.status = 'firestore';
     } catch (e) {
       console.error('Failed to save to Firestore', e);
+      baseItem.status = 'created';
     }
 
     // Step 2: Create issue in JIRA if configured and not skipped

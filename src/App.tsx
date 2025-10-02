@@ -3,6 +3,7 @@ import Home from './pages/Home.tsx';
 import Questionnaire from './pages/Questionnaire.tsx';
 import QuestionnaireEditor from './pages/QuestionnaireEditor.tsx';
 import SubmissionsList from './pages/SubmissionsList.tsx';
+import SubmissionsDesktop from './components/submissions/SubmissionsDesktop.tsx';
 import JiraSuccess from './pages/JiraSuccess.tsx';
 import { useQuestionnaireContext } from './context/QuestionnaireContext';
 import SignInComponent from './pages/SignIn.tsx';
@@ -70,7 +71,7 @@ function App() {
       <ThemeProvider>
         <JiraAuthProvider>
         <section className="h-screen bg-gray-50 dark:bg-gray-900 pb-12">
-          <div className="h-full max-w-3xl mx-auto px-4 pt-6 overflow-y-auto">
+          <div className="h-full w-full mx-auto px-4 pt-6 overflow-y-auto">
             <Routes>
               <Route
                 path="/"
@@ -129,6 +130,16 @@ function App() {
                   <AuthenticatedRoute>
                     <FirebaseProvider>
                       <SubmissionsList />
+                    </FirebaseProvider>
+                  </AuthenticatedRoute>
+                }
+              />
+              <Route
+                path="/submissions/desktop"
+                element={
+                  <AuthenticatedRoute>
+                    <FirebaseProvider>
+                      <SubmissionsDesktop />
                     </FirebaseProvider>
                   </AuthenticatedRoute>
                 }
