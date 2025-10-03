@@ -54,8 +54,9 @@ export type CheckConnectionResponse = {
   status?: number;
 };
 
-export const createAttachments = (schema: QuestionnaireSchema, recordings: VoiceRecordings):File[] => {
+export const createAttachments = (schema: QuestionnaireSchema, recordings: VoiceRecordings, images?: VoiceRecordings):File[] => {
   const attachments: File[] = [];
+  // Audio recordings
   for (const [qid, blob] of Object.entries(recordings)) {
     if (blob) {
       const questionNumber = schema.questions.findIndex(question => question.id === qid);
@@ -65,6 +66,18 @@ export const createAttachments = (schema: QuestionnaireSchema, recordings: Voice
           type: blob.type || 'audio/webm',
         }),
       );
+    }
+  }
+  // Image files
+  if (images) {
+    for (const [qid, blob] of Object.entries(images)) {
+      if (!blob) continue;
+      const questionNumber = schema.questions.findIndex(question => question.id === qid);
+      const questionId = questionNumber !== -1 ? (questionNumber + 1) : qid;
+      const mime = (blob as Blob).type || 'application/octet-stream';
+      const guessExt = mime.includes('/') ? mime.split('/')[1] : 'bin';
+      const fname = `question-${questionId}-${Date.now()}.${guessExt}`;
+      attachments.push(new File([blob], fname, { type: mime }));
     }
   }
   return attachments;

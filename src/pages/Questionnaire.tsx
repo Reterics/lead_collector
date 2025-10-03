@@ -18,7 +18,7 @@ import { transcribeViaFunction } from '../utils/transcribeClient.ts';
 export type Question = {
   id: string;
   name: string;
-  type: 'text' | 'textarea' | 'checkbox' | 'radio' | 'dropdown';
+  type: 'text' | 'textarea' | 'checkbox' | 'radio' | 'dropdown' | 'image';
   description?: string;
   options?: string[];
 };
@@ -256,6 +256,7 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [recordings, setRecordings] = useState<Record<string, Blob | null>>({});
+  const [images, setImages] = useState<Record<string, File | null>>({});
 
   // Split-button dropdown state
   const [menuOpen, setMenuOpen] = useState(false);
@@ -319,14 +320,14 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
     }
 
     const baseItem = createBaseItem(schema, values);
-    const attachments: File[] = createAttachments(schema, recordings);
+    const attachments: File[] = createAttachments(schema, recordings, images);
 
 
     // Step 1: Save to Firestore DB for persistence
     try {
       baseItem.status = 'firestore';
       await saveToFirestore(baseItem)
-      await saveToFirebaseStorage(baseItem, recordings, schema)
+      await saveToFirebaseStorage(baseItem, recordings, schema, images)
     } catch (e) {
       console.error('Failed to save to Firestore', e);
       baseItem.status = 'created';
@@ -490,6 +491,63 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
                     </option>
                   ))}
                 </select>
+              )}
+
+              {q.type === 'image' && (
+                <div className="mt-1">
+                  {!images[q.id] && (
+                    <label className="inline-block">
+                      <span className="sr-only">{t('questionnaire.upload_image') || 'Upload image'}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
+                          setImages((prev) => ({ ...prev, [q.id]: file }));
+                        }}
+                        className="block w-full text-sm text-gray-900 dark:text-gray-100 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-gray-700 dark:file:text-gray-100"
+                      />
+                    </label>
+                  )}
+                  {images[q.id] && (
+                    <div className="flex items-start gap-3">
+                      <img
+                        src={URL.createObjectURL(images[q.id] as File)}
+                        alt={q.name}
+                        className="h-24 w-24 object-cover rounded border border-gray-200 dark:border-gray-700"
+                      />
+                      <div className="flex flex-col gap-2">
+                        <div className="text-xs text-gray-600 dark:text-gray-300">
+                          {(images[q.id] as File)?.name}
+                        </div>
+                        <div className="flex gap-2">
+                          <label className="inline-block">
+                            <span className="sr-only">{t('questionnaire.change_image') || 'Change image'}</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
+                                setImages((prev) => ({ ...prev, [q.id]: file }));
+                              }}
+                              className="hidden"
+                            />
+                            <span className="px-3 py-1.5 text-xs rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer">
+                              {t('questionnaire.change') || 'Change'}
+                            </span>
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => setImages((prev) => ({ ...prev, [q.id]: null }))}
+                            className="px-3 py-1.5 text-xs rounded-md border border-red-300 text-red-700 hover:bg-red-50 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-900/30"
+                          >
+                            {t('questionnaire.remove') || 'Remove'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>

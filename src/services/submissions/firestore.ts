@@ -21,6 +21,7 @@ export interface BaseItem extends CommonCollectionData {
   values: Answers
   questions: Partial<Question>[]
   recordingUrls?: Record<string, string>
+  imageUrls?: Record<string, string>
 }
 
 export type Answers = Record<string, string | boolean>
@@ -29,6 +30,7 @@ const formatDescription = (
   questions: Partial<Question>[],
   values: Answers,
   recordingUrls?: Record<string, string>,
+  imageUrls?: Record<string, string>,
 ): string => {
   const parts: string[] = [];
   parts.push('Questionnaire responses');
@@ -41,9 +43,13 @@ const formatDescription = (
     const answer = Array.isArray(raw) ? raw.join(', ') : String(raw);
     parts.push(`${(qId)}.Q: ${q.name || q.id}`);
     parts.push(`${(qId)}.A: ${answer}`);
-    const url = recordingUrls?.[q.id];
-    if (url) {
-      parts.push(`Recording: ${url}`);
+    const rurl = recordingUrls?.[q.id];
+    if (rurl) {
+      parts.push(`Recording: ${rurl}`);
+    }
+    const iurl = imageUrls?.[q.id];
+    if (iurl) {
+      parts.push(`Image: ${iurl}`);
     }
     parts.push('');
   }
@@ -82,7 +88,7 @@ export const createBaseItem = (schema: QuestionnaireSchema, values: Answers): Ba
   }
 }
 
-export const saveToFirebaseStorage = async (baseItem: BaseItem, recordings: VoiceRecordings, schema: QuestionnaireSchema) => {
+export const saveToFirebaseStorage = async (baseItem: BaseItem, recordings: VoiceRecordings, schema: QuestionnaireSchema, images?: VoiceRecordings) => {
   if (!baseItem.id) {
     throw new Error('Missing required parameters: id');
   }
@@ -101,14 +107,31 @@ export const saveToFirebaseStorage = async (baseItem: BaseItem, recordings: Voic
       });
       recordingUrls[qid] = await getDownloadURL(ref);
     }
-    if (Object.keys(recordingUrls).length > 0) {
-      baseItem.recordingUrls = recordingUrls;
-      // Rebuild description to include recording URLs per question
-      baseItem.description = formatDescription(baseItem.questions, baseItem.values, recordingUrls);
+    const imageUrls: Record<string, string> = {};
+    if (images) {
+      for (const [qid, blob] of Object.entries(images)) {
+        if (!blob) continue;
+        const questionNumber = schema.questions.findIndex(question => question.id === qid);
+        const questionId = questionNumber !== -1 ? (questionNumber + 1) : qid;
+        const mime = (blob as Blob).type || 'application/octet-stream';
+        const guessExt = mime.includes('/') ? mime.split('/')[1] : 'bin';
+        const path = `submissions/${baseItem.id}/question-${questionId}-${Date.now()}.${guessExt}`;
+        const ref = storageRef(storage, path);
+        await uploadBytes(ref, blob, {
+          contentType: mime,
+        });
+        imageUrls[qid] = await getDownloadURL(ref);
+      }
+    }
+    if (Object.keys(recordingUrls).length > 0 || Object.keys(imageUrls).length > 0) {
+      if (Object.keys(recordingUrls).length > 0) baseItem.recordingUrls = recordingUrls;
+      if (Object.keys(imageUrls).length > 0) baseItem.imageUrls = imageUrls;
+      // Rebuild description to include uploaded asset URLs per question
+      baseItem.description = formatDescription(baseItem.questions, baseItem.values, recordingUrls, imageUrls);
       await firebaseModel.update(baseItem, 'submissions');
     }
   } catch (uploadErr) {
-    console.error('Failed to upload recordings to Firebase Storage (error path)', uploadErr);
+    console.error('Failed to upload files to Firebase Storage', uploadErr);
   }
 
 }

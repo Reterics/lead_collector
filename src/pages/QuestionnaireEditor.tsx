@@ -242,6 +242,7 @@ export default function QuestionnaireEditor() {
                   <option value="checkbox">{t('editor.types.checkbox')}</option>
                   <option value="radio">{t('editor.types.radio')}</option>
                   <option value="dropdown">{t('editor.types.dropdown')}</option>
+                  <option value="image">{t('editor.types.image') || 'Image'}</option>
                 </select>
               </div>
             </div>
