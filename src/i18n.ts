@@ -76,7 +76,10 @@ export const resources = {
         transcribing: 'Transcribing...',
         accept_terms_text: 'I accept the',
         terms_link: 'Terms and Conditions',
-        accept_terms_error: 'You must accept the Terms and Conditions to proceed.'
+        accept_terms_error: 'You must accept the Terms and Conditions to proceed.',
+        change_image: 'Change image',
+        change: 'Change',
+        remove: 'Remove'
       },
       submissions: {
         title: 'Submissions',
@@ -195,7 +198,10 @@ export const resources = {
         transcribing: 'Átirat készítése...',
         accept_terms_text: 'Elfogadom a',
         terms_link: 'Felhasználási feltételeket',
-        accept_terms_error: 'A folytatáshoz el kell fogadnia a felhasználási feltételeket.'
+        accept_terms_error: 'A folytatáshoz el kell fogadnia a felhasználási feltételeket.',
+        change_image: 'Kép cseréje',
+        change: 'Módosítás',
+        remove: 'Eltávolítás'
       },
       submissions: {
         title: 'Beküldések',
