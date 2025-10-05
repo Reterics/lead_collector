@@ -248,10 +248,24 @@ export const resources = {
   },
 } as const;
 
+export const LANGUAGE_STORAGE_KEY = 'appLanguage';
+
+function getStoredLanguage(): string | null {
+  try {
+    return typeof window !== 'undefined' && window.localStorage
+      ? window.localStorage.getItem(LANGUAGE_STORAGE_KEY)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+const initialLng = getStoredLanguage() || 'hu';
+
 void i18n.use(initReactI18next).init({
   resources,
-  lng: 'en',
-  fallbackLng: 'en',
+  lng: initialLng,
+  fallbackLng: 'hu',
   interpolation: {
     escapeValue: false,
   },

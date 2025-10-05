@@ -1,11 +1,16 @@
 import React from 'react';
-import i18n from '../i18n';
+import i18n, { LANGUAGE_STORAGE_KEY } from '../i18n';
 
 const LanguageSwitcher: React.FC = () => {
-  const [lang, setLang] = React.useState(i18n.language || 'en');
+  const [lang, setLang] = React.useState<string>(() => i18n.language || 'hu');
 
   const onChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newLng = e.target.value;
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem(LANGUAGE_STORAGE_KEY, newLng);
+      }
+    } catch { /* */ }
     i18n.changeLanguage(newLng);
     setLang(newLng);
   };
