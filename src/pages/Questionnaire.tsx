@@ -501,6 +501,7 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
                       <input
                         type="file"
                         accept="image/*"
+                        capture="environment"
                         onChange={(e) => {
                           const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
                           setImages((prev) => ({ ...prev, [q.id]: file }));
@@ -526,6 +527,7 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
                             <input
                               type="file"
                               accept="image/*"
+                              capture="environment"
                               onChange={(e) => {
                                 const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
                                 setImages((prev) => ({ ...prev, [q.id]: file }));
