@@ -126,6 +126,13 @@ export const resources = {
         submitted: 'Your request has been submitted.',
         issue: 'Issue'
       },
+      camera: {
+        close: 'Close',
+        capture: 'Capture',
+        front: 'Front',
+        rear: 'Rear',
+        error_unable_access: 'Unable to access camera'
+      },
     },
   },
   hu: {
@@ -249,6 +256,13 @@ export const resources = {
         summary: 'Összegzés',
         submitted: 'Kérelmét elküldtük.',
         issue: 'Feladat'
+      },
+      camera: {
+        close: 'Bezárás',
+        capture: 'Felvétel',
+        front: 'Előlapi',
+        rear: 'Hátlapi',
+        error_unable_access: 'Nem lehet hozzáférni a kamerához'
       },
     },
   },

@@ -247,6 +247,7 @@ const CameraCapture: React.FC<{
   const [error, setError] = useState<string | null>(null);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const [initialised, setInitialised] = useState(false);
+  const { t } = useTranslation();
 
   const stopStream = () => {
     const s = streamRef.current;
@@ -282,7 +283,7 @@ const CameraCapture: React.FC<{
       }
       setInitialised(true);
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Unable to access camera';
+      const msg = e instanceof Error ? e.message : t('camera.error_unable_access');
       setError(msg);
     }
   };
@@ -322,28 +323,40 @@ const CameraCapture: React.FC<{
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md overflow-hidden">
-        <div className="p-3 flex items-center justify-between border-b border-gray-200 dark:border-gray-700">
-          <div className="text-sm font-medium text-gray-700 dark:text-gray-200">Camera</div>
-          <button onClick={() => { onClose(); stopStream(); }} className="text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white">✕</button>
+    <div className="fixed inset-0 z-50 bg-black">
+      <video ref={videoRef} playsInline muted className="w-full h-full object-cover" />
+
+      <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-end">
+        <button
+          onClick={() => { onClose(); stopStream(); }}
+          className="px-3 py-1.5 rounded-md bg-black/60 text-white text-sm hover:bg-black/80"
+>
+          {t('camera.close')}
+        </button>
+      </div>
+
+      {error && (
+        <div className="absolute top-14 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded bg-red-600 text-white text-xs">
+          {error}
         </div>
-        <div className="p-3">
-          {error && (
-            <div className="text-red-600 dark:text-red-400 text-sm mb-2">{error}</div>
-          )}
-          <div className="relative aspect-video bg-black rounded-md overflow-hidden">
-            <video ref={videoRef} playsInline muted className="w-full h-full object-contain" />
-          </div>
-          <div className="mt-3 flex items-center justify-between gap-2">
-            <button type="button" onClick={flip} className="px-3 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
-              {facingMode === 'environment' ? '↺ Front' : '↻ Rear'}
-            </button>
-            <button type="button" disabled={!initialised} onClick={capture} className={`px-4 py-2 text-sm rounded-md text-white ${initialised ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-400/50 cursor-not-allowed'}`}>
-              Capture
-            </button>
-          </div>
-        </div>
+      )}
+
+      <div className="absolute bottom-0 left-0 right-0 p-4 flex items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={flip}
+          className="px-3 py-2 text-sm rounded-md bg-white/80 text-gray-900 hover:bg-white"
+>
+          {facingMode === 'environment' ? `↺ ${t('camera.front')}` : `↻ ${t('camera.rear')}`}
+        </button>
+        <button
+          type="button"
+          disabled={!initialised}
+          onClick={capture}
+          className={`px-4 py-2 text-sm rounded-full text-white shadow ${initialised ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-400/50 cursor-not-allowed'}`}
+>
+          {t('camera.capture')}
+        </button>
       </div>
     </div>
   );
@@ -502,7 +515,6 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
         </h2>
       </div>
       <form onSubmit={onSubmit} className="space-y-5">
-        {/* Terms and Conditions acceptance */}
         <div className="group relative overflow-hidden bg-gradient-to-br from-white to-slate-50 dark:from-gray-800 dark:to-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
           <label className="inline-flex items-start gap-3">
             <input
