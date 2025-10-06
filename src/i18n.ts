@@ -79,7 +79,10 @@ export const resources = {
         accept_terms_error: 'You must accept the Terms and Conditions to proceed.',
         change_image: 'Change image',
         change: 'Change',
-        remove: 'Remove'
+        remove: 'Remove',
+        use_camera: 'Use camera',
+        upload_from_device: 'Upload from device',
+        retake_camera: 'Retake (camera)'
       },
       submissions: {
         title: 'Submissions',
@@ -201,7 +204,10 @@ export const resources = {
         accept_terms_error: 'A folytatáshoz el kell fogadnia a felhasználási feltételeket.',
         change_image: 'Kép cseréje',
         change: 'Módosítás',
-        remove: 'Eltávolítás'
+        remove: 'Eltávolítás',
+        use_camera: 'Kamera használata',
+        upload_from_device: 'Feltöltés eszközről',
+        retake_camera: 'Újrafotózás (kamera)'
       },
       submissions: {
         title: 'Beküldések',

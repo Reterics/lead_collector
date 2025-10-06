@@ -236,6 +236,119 @@ const TextareaWithRecorder: React.FC<{
   );
 };
 
+// Simple in-app camera capture to avoid native camera autofocus-loop
+const CameraCapture: React.FC<{
+  open: boolean;
+  onClose: () => void;
+  onCapture: (file: File) => void;
+}> = ({ open, onClose, onCapture }) => {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
+  const [initialised, setInitialised] = useState(false);
+
+  const stopStream = () => {
+    const s = streamRef.current;
+    if (s) {
+      s.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+  };
+
+  const startStream = async (mode: 'user' | 'environment') => {
+    try {
+      setError(null);
+      stopStream();
+      const constraints: MediaStreamConstraints = {
+        video: {
+          facingMode: { ideal: mode },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+        audio: false,
+      };
+      const s = await navigator.mediaDevices.getUserMedia(constraints);
+      // Try to apply focus-related constraints if supported to reduce hunting
+      const track = s.getVideoTracks()[0];
+      try {
+        // @ts-expect-error - focusMode is not in standard typings
+        await track.applyConstraints?.({ advanced: [{ focusMode: 'continuous' }] });
+      } catch { /* ignore */ }
+      streamRef.current = s;
+      if (videoRef.current) {
+        videoRef.current.srcObject = s;
+        await videoRef.current.play().catch(() => {/* ignore */});
+      }
+      setInitialised(true);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Unable to access camera';
+      setError(msg);
+    }
+  };
+
+  useEffect(() => {
+    if (open) {
+      void startStream(facingMode);
+    }
+    return () => { stopStream(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  const flip = () => {
+    const next = facingMode === 'environment' ? 'user' : 'environment';
+    setFacingMode(next);
+    void startStream(next);
+  };
+
+  const capture = async () => {
+    const video = videoRef.current;
+    if (!video) return;
+    const canvas = document.createElement('canvas');
+    const w = video.videoWidth || 1280;
+    const h = video.videoHeight || 720;
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0, w, h);
+    const blob: Blob = await new Promise((resolve) => canvas.toBlob((b) => resolve(b as Blob), 'image/jpeg', 0.92));
+    const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
+    onCapture(file);
+    onClose();
+    stopStream();
+  };
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md overflow-hidden">
+        <div className="p-3 flex items-center justify-between border-b border-gray-200 dark:border-gray-700">
+          <div className="text-sm font-medium text-gray-700 dark:text-gray-200">Camera</div>
+          <button onClick={() => { onClose(); stopStream(); }} className="text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white">✕</button>
+        </div>
+        <div className="p-3">
+          {error && (
+            <div className="text-red-600 dark:text-red-400 text-sm mb-2">{error}</div>
+          )}
+          <div className="relative aspect-video bg-black rounded-md overflow-hidden">
+            <video ref={videoRef} playsInline muted className="w-full h-full object-contain" />
+          </div>
+          <div className="mt-3 flex items-center justify-between gap-2">
+            <button type="button" onClick={flip} className="px-3 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+              {facingMode === 'environment' ? '↺ Front' : '↻ Rear'}
+            </button>
+            <button type="button" disabled={!initialised} onClick={capture} className={`px-4 py-2 text-sm rounded-md text-white ${initialised ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-400/50 cursor-not-allowed'}`}>
+              Capture
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
   const { t } = useTranslation();
   const { status } = useJiraAuth();
@@ -257,6 +370,7 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
   const [error, setError] = useState<string | null>(null);
   const [recordings, setRecordings] = useState<Record<string, Blob | null>>({});
   const [images, setImages] = useState<Record<string, File | null>>({});
+  const [cameraFor, setCameraFor] = useState<string | null>(null);
 
   // Split-button dropdown state
   const [menuOpen, setMenuOpen] = useState(false);
@@ -496,19 +610,30 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
               {q.type === 'image' && (
                 <div className="mt-1">
                   {!images[q.id] && (
-                    <label className="inline-block">
-                      <span className="sr-only">{t('questionnaire.upload_image') || 'Upload image'}</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        onChange={(e) => {
-                          const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
-                          setImages((prev) => ({ ...prev, [q.id]: file }));
-                        }}
-                        className="block w-full text-sm text-gray-900 dark:text-gray-100 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-gray-700 dark:file:text-gray-100"
-                      />
-                    </label>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setCameraFor(q.id)}
+                        className="px-3 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                      >
+                        {t('questionnaire.use_camera') || 'Use camera'}
+                      </button>
+                      <label className="inline-block">
+                        <span className="sr-only">{t('questionnaire.upload_image') || 'Upload image'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
+                            setImages((prev) => ({ ...prev, [q.id]: file }));
+                          }}
+                          className="hidden"
+                        />
+                        <span className="px-3 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer">
+                          {t('questionnaire.upload_from_device') || 'Upload from device'}
+                        </span>
+                      </label>
+                    </div>
                   )}
                   {images[q.id] && (
                     <div className="flex items-start gap-3">
@@ -521,13 +646,19 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
                         <div className="text-xs text-gray-600 dark:text-gray-300">
                           {(images[q.id] as File)?.name}
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 flex-wrap">
+                          <button
+                            type="button"
+                            onClick={() => setCameraFor(q.id)}
+                            className="px-3 py-1.5 text-xs rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                          >
+                            {t('questionnaire.retake_camera') || 'Retake (camera)'}
+                          </button>
                           <label className="inline-block">
                             <span className="sr-only">{t('questionnaire.change_image') || 'Change image'}</span>
                             <input
                               type="file"
                               accept="image/*"
-                              capture="environment"
                               onChange={(e) => {
                                 const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
                                 setImages((prev) => ({ ...prev, [q.id]: file }));
@@ -609,6 +740,15 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
           </div>
         )}
       </form>
+      <CameraCapture
+        open={!!cameraFor}
+        onClose={() => setCameraFor(null)}
+        onCapture={(file) => {
+          if (cameraFor) {
+            setImages((prev) => ({ ...prev, [cameraFor]: file }));
+          }
+        }}
+      />
     </>
   );
 };
