@@ -1,7 +1,8 @@
-import React, {useEffect, useMemo, useRef, useState} from 'react';
+import React, {useContext, useEffect, useMemo, useRef, useState} from 'react';
 import {
   createAttachments,
-  createIssue,
+  createIssue, getJiraConfig,
+  type JiraConfig,
 } from '../services/jira.ts';
 import {saveSubmission} from '../utils/submissions.ts';
 import {useTranslation} from 'react-i18next';
@@ -13,6 +14,7 @@ import {
 } from '../services/submissions/firestore.ts';
 import { useJiraAuth } from '../context/JiraAuthContext.tsx';
 import { transcribeViaFunction } from '../utils/transcribeClient.ts';
+import { DBContext } from '../context/DBContext.ts';
 
 // Types matching the provided JSON format
 export type Question = {
@@ -365,6 +367,8 @@ const CameraCapture: React.FC<{
 export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
   const { t } = useTranslation();
   const { status } = useJiraAuth();
+  const db = useContext(DBContext);
+  const jiraCfg: JiraConfig = getJiraConfig(db?.data?.currentUser);
   const initialState = useMemo(() => {
     const s: Record<string, string | boolean> = {};
     for (const q of schema.questions) {
@@ -463,7 +467,7 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
     // Step 2: Create issue in JIRA if configured and not skipped
     if (!opts?.skipJira && status === 202) {
       try {
-        const res = await createIssue(baseItem, attachments);
+        const res = await createIssue(baseItem, attachments, jiraCfg);
         const firestoreSaved = baseItem.status === 'firestore';
         if (res?.id) {
           baseItem.status = 'jira';

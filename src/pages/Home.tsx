@@ -155,6 +155,12 @@ const Home: React.FC = () => {
           >
             {t('home.submissions')}
           </Link>
+          <Link
+            to="/settings"
+            className="px-4 py-2 text-sm font-medium rounded-md bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600"
+          >
+            Settings
+          </Link>
         </div>
         <div className="flex items-center gap-2">
           <button

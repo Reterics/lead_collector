@@ -26,6 +26,9 @@ export interface UserData extends GeneralCollectionEntry {
   id: string;
   password?: string;
   password_confirmation?: string;
+  projectKey?: string;
+  issueType?: string;
+  cloudId?: string;
 }
 
 export interface CommonCollectionData {

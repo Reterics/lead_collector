@@ -2,16 +2,22 @@ import type { VoiceRecordings } from './submissions/firestore.ts';
 import type { QuestionnaireSchema } from '../pages/Questionnaire.tsx';
 import { convertStringToADF } from '../utils/jira.ts';
 import {baseUrl} from "../utils/commons.ts";
+import type {UserData} from "./firebase.tsx";
 
 export type JiraConfig = {
   projectKey?: string;
   issueType?: string;
+  cloudId?: string;
 };
 
-export const getJiraConfig = (): JiraConfig => ({
-  projectKey: import.meta.env.VITE_JIRA_PROJECT_KEY,
-  issueType: import.meta.env.VITE_JIRA_ISSUE_TYPE || 'Task',
-});
+export const getJiraConfig = (currentUser?: UserData): JiraConfig =>
+  (
+    {
+      projectKey: currentUser?.projectKey || import.meta.env.VITE_JIRA_PROJECT_KEY,
+      issueType: currentUser?.issueType || import.meta.env.VITE_JIRA_ISSUE_TYPE || 'Task',
+      cloudId: currentUser?.cloudId,
+    }
+  );
 
 const isConfigured = (cfg: JiraConfig) => !!cfg.projectKey;
 
@@ -109,13 +115,11 @@ export async function checkJiraConnection(): Promise<{ status: number; json: Che
 
 export const createIssue = async (
   params: CreateIssueParams,
-  _attachments?: File[],
-): Promise<
-  IssueSuccessResponse
-> => {
-  const cfg = getJiraConfig();
-  if (!isConfigured(cfg)) {
-    throw new Error('Jira not configured');
+  _attachments: File[] = [],
+  cfg?: JiraConfig,
+): Promise<IssueSuccessResponse> => {
+  if (!cfg || !isConfigured(cfg)) {
+    throw new Error('Jira not configured (cloud/Firestore only)');
   }
 
   // 1) Create the issue via backend (server handles Bearer + cloudId)

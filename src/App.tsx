@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate, useParams, Link } from 'react-router-dom';
 import Home from './pages/Home.tsx';
+import Settings from './pages/Settings.tsx';
 import Questionnaire from './pages/Questionnaire.tsx';
 import QuestionnaireEditor from './pages/QuestionnaireEditor.tsx';
 import SubmissionsList from './pages/SubmissionsList.tsx';
@@ -145,6 +146,16 @@ function App() {
                       <SubmissionsProvider>
                         <SubmissionsDesktop />
                       </SubmissionsProvider>
+                    </FirebaseProvider>
+                  </AuthenticatedRoute>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <AuthenticatedRoute>
+                    <FirebaseProvider>
+                      <Settings />
                     </FirebaseProvider>
                   </AuthenticatedRoute>
                 }

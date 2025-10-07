@@ -1,7 +1,8 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { firebaseModel } from '../config.ts';
-import { createIssue, type IssueSuccessResponse } from '../services/jira.ts';
+import {createIssue, getJiraConfig, type IssueSuccessResponse, type JiraConfig} from '../services/jira.ts';
 import { loadSubmissions, removeSubmission, saveSubmission, type SubmissionEntry } from '../utils/submissions.ts';
+import { DBContext } from './DBContext.ts';
 
 export type SubmissionsContextValue = {
   items: SubmissionEntry[];
@@ -19,7 +20,8 @@ export const SubmissionsProvider: React.FC<React.PropsWithChildren> = ({ childre
   const [items, setItems] = useState<SubmissionEntry[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [retrying, setRetrying] = useState<Record<string, boolean>>({});
-
+  const db = useContext(DBContext);
+  const jiraCfg: JiraConfig = getJiraConfig(db?.data?.currentUser);
   const fetchFromFirestore = useCallback(async () => {
     try {
       const fsItems = (await firebaseModel.getAll('submissions', true)) as unknown as Array<{
@@ -84,7 +86,7 @@ export const SubmissionsProvider: React.FC<React.PropsWithChildren> = ({ childre
     let nextStatus: SubmissionEntry['status'] = 'firestore';
     try {
       if (!issueKey) {
-        const res = await createIssue({ summary: s.summary, description: s.description });
+        const res = await createIssue({ summary: s.summary, description: s.description }, [], jiraCfg);
         if ((res as IssueSuccessResponse)?.id) {
           nextStatus = 'jira';
           issueKey = (res as IssueSuccessResponse).key;
@@ -110,7 +112,7 @@ export const SubmissionsProvider: React.FC<React.PropsWithChildren> = ({ childre
     } finally {
       setRetrying((r) => ({ ...r, [s.id]: false }));
     }
-  }, [refresh]);
+  }, [jiraCfg, refresh]);
 
   const sorted = useMemo(() => {
     return [...items].sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
