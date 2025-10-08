@@ -22,6 +22,8 @@ export interface BaseItem extends CommonCollectionData {
   questions: Partial<Question>[]
   recordingUrls?: Record<string, string>
   imageUrls?: Record<string, string>
+  ownerId?: string
+  ownerEmail?: string
 }
 
 export type Answers = Record<string, string | boolean>

@@ -1,4 +1,4 @@
-import { firebaseAuth, firebaseAuthError } from '../config.ts';
+import { firebaseAuth, firebaseAuthError, firebaseModel, firebaseCollections } from '../config.ts';
 import React, { createContext, useEffect, useState } from 'react';
 import type {
   IAuth,
@@ -40,6 +40,20 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const { user } = userCredential; //object destructuring
         if (user) {
           setCurrentUser(user);
+          try {
+            // Create user profile doc with default role if it doesn't exist
+            await firebaseModel.update(
+              {
+                id: user.uid,
+                email: user.email || undefined,
+                username: user.email || user.uid,
+                role: 'user',
+              },
+              firebaseCollections.users,
+            );
+          } catch (e) {
+            console.warn('Failed to create user profile doc:', e);
+          }
           //redirect the user on the targeted route
           navigate('/', { replace: true });
         } else {
@@ -100,9 +114,28 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     //onAuthStateChanged check if the user is still logged in or not
     if (firebaseAuth) {
-      return onAuthStateChanged(firebaseAuth, (user) => {
+      return onAuthStateChanged(firebaseAuth, async (user) => {
         setCurrentUser(user);
         setIsAuthLoading(false);
+        // Backfill user profile with role if missing
+        try {
+          if (user) {
+            const existing = await firebaseModel.get(user.uid, firebaseCollections.users);
+            if (!existing) {
+              await firebaseModel.update(
+                {
+                  id: user.uid,
+                  email: user.email || undefined,
+                  username: user.email || user.uid,
+                  role: 'user',
+                },
+                firebaseCollections.users,
+              );
+            }
+          }
+        } catch (e) {
+          console.warn('Failed to backfill user profile doc:', e);
+        }
       });
     }
     console.warn('AuthProvider failed to load due to missing firebaseAuth');

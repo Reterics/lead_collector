@@ -19,10 +19,12 @@ export interface GeneralCollectionEntry {
   deleted?: boolean;
 }
 
+export type UserRole = 'admin' | 'manager' | 'user';
+
 export interface UserData extends GeneralCollectionEntry {
   username?: string;
   email?: string;
-  role?: string;
+  role?: UserRole;
   id: string;
   password?: string;
   password_confirmation?: string;
@@ -138,7 +140,7 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
     setCtxData({
       questionnaires,
       users,
-      currentUser: user,
+      currentUser: user as UserData,
       deleted: await firebaseModel.getAll('deleted'),
     });
   };

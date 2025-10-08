@@ -9,6 +9,8 @@ export type SubmissionEntry = {
   status: QuestionnaireStatus;
   issueKey?: string;
   issueUrl?: string;
+  ownerId?: string;
+  ownerEmail?: string;
 };
 
 const STORAGE_KEY = 'lead_collector_submissions';

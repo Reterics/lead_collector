@@ -33,7 +33,15 @@ export const SubmissionsProvider: React.FC<React.PropsWithChildren> = ({ childre
         status?: string;
         issueKey?: string;
         issueUrl?: string;
+        ownerId?: string;
+        ownerEmail?: string;
       }>;
+      // Map Firestore docs to SubmissionEntry and apply role-based filtering
+      const currentUser = db?.data?.currentUser;
+      const isAdmin = currentUser?.role === 'admin';
+      const userId = currentUser?.id;
+      const userEmail = currentUser?.email;
+
       const mapped: SubmissionEntry[] = (fsItems || []).map((d) => ({
         id: d.id,
         createdAt: d.createdAt || new Date().toISOString(),
@@ -43,11 +51,23 @@ export const SubmissionsProvider: React.FC<React.PropsWithChildren> = ({ childre
         status: (d.status as SubmissionEntry['status']) || 'unknown',
         issueKey: d.issueKey,
         issueUrl: d.issueUrl,
+        ownerId: d.ownerId,
+        ownerEmail: d.ownerEmail,
       }));
+
       const local = loadSubmissions();
+
+      // For non-admins, show only owned Firestore submissions; admins see all
+      const visibleFs = isAdmin
+        ? mapped
+        : mapped.filter(
+            (m) => (m.ownerId && userId && m.ownerId === userId) || (m.ownerEmail && userEmail && m.ownerEmail === userEmail)
+          );
+
+      // Always include local submissions (assumed owned by current user context)
       const map = new Map<string, SubmissionEntry>();
       for (const s of local) map.set(s.id, s);
-      for (const m of mapped) map.set(m.id, m);
+      for (const m of visibleFs) map.set(m.id, m);
       setItems(Array.from(map.values()));
     } catch (e) {
       console.error('Failed to load submissions from Firestore', e);
@@ -55,7 +75,7 @@ export const SubmissionsProvider: React.FC<React.PropsWithChildren> = ({ childre
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [db?.data?.currentUser]);
 
   useEffect(() => {
     console.log('SubmissionsProvider mounted');
@@ -69,6 +89,18 @@ export const SubmissionsProvider: React.FC<React.PropsWithChildren> = ({ childre
   }, [fetchFromFirestore]);
 
   const onDelete = useCallback(async (id: string) => {
+    // Enforce permissions: non-admins can only delete their own submissions
+    const currentUser = db?.data?.currentUser;
+    const isAdmin = currentUser?.role === 'admin';
+    const target = items.find((x) => x.id === id);
+    const isOwner = target && (
+      (currentUser?.id && target.ownerId === currentUser.id) ||
+      (currentUser?.email && target.ownerEmail === currentUser.email)
+    );
+    if (!isAdmin && !isOwner) {
+      console.warn('Permission denied: cannot delete submission not owned by current user');
+      return;
+    }
     try {
       await firebaseModel.remove(id, 'submissions');
     } catch (e) {
@@ -77,9 +109,21 @@ export const SubmissionsProvider: React.FC<React.PropsWithChildren> = ({ childre
     }
     removeSubmission(id);
     refresh();
-  }, [refresh]);
+  }, [db?.data?.currentUser, items, refresh]);
 
   const onRetry = useCallback(async (s: SubmissionEntry) => {
+    // Enforce permissions: non-admins can only retry their own submissions
+    const currentUser = db?.data?.currentUser;
+    const isAdmin = currentUser?.role === 'admin';
+    const isOwner = (
+      (currentUser?.id && s.ownerId === currentUser.id) ||
+      (currentUser?.email && s.ownerEmail === currentUser.email)
+    );
+    if (!isAdmin && !isOwner) {
+      console.warn('Permission denied: cannot retry submission not owned by current user');
+      return;
+    }
+
     setRetrying((r) => ({ ...r, [s.id]: true }));
     let issueKey: string | undefined = s.issueKey;
     let issueUrl: string | undefined = s.issueUrl;
@@ -103,6 +147,8 @@ export const SubmissionsProvider: React.FC<React.PropsWithChildren> = ({ childre
           status: nextStatus,
           issueKey,
           issueUrl,
+          ownerId: s.ownerId,
+          ownerEmail: s.ownerEmail,
         }, 'submissions');
       } catch (e) { void e; }
       saveSubmission({ ...s, status: nextStatus, issueKey, issueUrl });
@@ -112,7 +158,7 @@ export const SubmissionsProvider: React.FC<React.PropsWithChildren> = ({ childre
     } finally {
       setRetrying((r) => ({ ...r, [s.id]: false }));
     }
-  }, [jiraCfg, refresh]);
+  }, [db?.data?.currentUser, jiraCfg, refresh]);
 
   const sorted = useMemo(() => {
     return [...items].sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
