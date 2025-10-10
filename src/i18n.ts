@@ -9,6 +9,7 @@ export const resources = {
         title: 'Lead Collector',
         back: 'Back',
         goHome: 'Go to Home',
+        settings: 'Settings',
         notFound: 'Questionnaire not found',
         notFoundDesc: 'The requested questionnaire "{{id}}" does not exist.',
       },
@@ -133,6 +134,52 @@ export const resources = {
         rear: 'Rear',
         error_unable_access: 'Unable to access camera'
       },
+      settings: {
+        title: 'Settings',
+        tabs: {
+          user: 'User settings',
+          list: 'User list',
+          add: 'Add user'
+        },
+        form: {
+          jiraProjectKey: 'JIRA Project Key',
+          jiraIssueType: 'JIRA Issue Type',
+          jiraCloudId: 'JIRA Cloud ID',
+          cloudIdHelp: 'If set, the backend may use this to target a specific Jira site.',
+          placeholders: {
+            projectKey: 'e.g. ABC',
+            issueType: 'Task',
+            cloudId: 'Optional, usually discovered via OAuth',
+            email: 'user@example.com',
+            name: 'Full name (optional)',
+            tempPassword: 'Optional',
+            confirmPassword: 'Repeat password'
+          }
+        },
+        save: 'Save',
+        saving: 'Saving...',
+        saved: 'Saved',
+        saveFailed: 'Save failed',
+        addUser: {
+          title: 'Add user',
+          email: 'Email',
+          name: 'Name',
+          role: 'Role',
+          tempPassword: 'Temporary password',
+          confirmPassword: 'Confirm password',
+          create: 'Create user',
+          creating: 'Creating...',
+          created: 'User created',
+          createFailed: 'User creation failed',
+          validation: {
+            validEmailRequired: 'Valid email is required',
+            passwordsDoNotMatch: 'Passwords do not match'
+          }
+        },
+        list: {
+          title: 'Existing users'
+        }
+      },
     },
   },
   hu: {
@@ -141,6 +188,7 @@ export const resources = {
         title: 'Lead Gyűjtő',
         back: 'Vissza',
         goHome: 'Ugrás a főoldalra',
+        settings: 'Beállítások',
         notFound: 'Kérdőív nem található',
         notFoundDesc: 'A kért kérdőív ("{{id}}") nem létezik.',
       },
@@ -263,6 +311,52 @@ export const resources = {
         front: 'Előlapi',
         rear: 'Hátlapi',
         error_unable_access: 'Nem lehet hozzáférni a kamerához'
+      },
+      settings: {
+        title: 'Beállítások',
+        tabs: {
+          user: 'Felhasználói beállítások',
+          list: 'Felhasználók listája',
+          add: 'Felhasználó hozzáadása'
+        },
+        form: {
+          jiraProjectKey: 'JIRA Projekt kulcs',
+          jiraIssueType: 'JIRA Feladat típusa',
+          jiraCloudId: 'JIRA Cloud azonosító',
+          cloudIdHelp: 'Ha meg van adva, a backend ezt használhatja egy konkrét Jira oldal megcélzásához.',
+          placeholders: {
+            projectKey: 'pl. ABC',
+            issueType: 'Feladat',
+            cloudId: 'Opcionális, általában OAuth során derül ki',
+            email: 'user@example.com',
+            name: 'Teljes név (opcionális)',
+            tempPassword: 'Opcionális',
+            confirmPassword: 'Jelszó megismétlése'
+          }
+        },
+        save: 'Mentés',
+        saving: 'Mentés...',
+        saved: 'Elmentve',
+        saveFailed: 'Mentés sikertelen',
+        addUser: {
+          title: 'Felhasználó hozzáadása',
+          email: 'E-mail',
+          name: 'Név',
+          role: 'Szerepkör',
+          tempPassword: 'Ideiglenes jelszó',
+          confirmPassword: 'Jelszó megerősítése',
+          create: 'Felhasználó létrehozása',
+          creating: 'Létrehozás...',
+          created: 'Felhasználó létrehozva',
+          createFailed: 'Felhasználó létrehozása sikertelen',
+          validation: {
+            validEmailRequired: 'Érvényes e-mail szükséges',
+            passwordsDoNotMatch: 'A jelszavak nem egyeznek'
+          }
+        },
+        list: {
+          title: 'Létező felhasználók'
+        }
       },
     },
   },
