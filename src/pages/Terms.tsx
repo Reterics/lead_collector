@@ -1,8 +1,4 @@
-import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-
 const Terms = () => {
-  const { t } = useTranslation();
   const effectiveDate = new Date().toLocaleDateString(undefined, {
     year: 'numeric',
     month: 'long',
@@ -12,10 +8,6 @@ const Terms = () => {
   return (
     <section className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-3xl mx-auto px-4 py-8">
-        <div className="mb-4">
-          <Link to="/" className="text-blue-600 hover:underline">&larr; {t('app.back')}</Link>
-        </div>
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">{t('terms.title') || 'Terms and Conditions'}</h1>
         <div className="prose prose-gray dark:prose-invert">
           <p>
             These Terms and Conditions ("Terms") govern your access to and use of this application

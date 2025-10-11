@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
 import {useTranslation} from 'react-i18next';
 import {
   FiRefreshCcw,
@@ -7,8 +6,6 @@ import {
   FiEye,
   FiX,
   FiExternalLink,
-  FiSmartphone,
-  FiArrowLeft,
 } from 'react-icons/fi';
 import {normalizeJiraUrl} from '../../utils/commons.ts';
 import type { SubmissionEntry } from '../../utils/submissions.ts';
@@ -54,7 +51,7 @@ const Modal: React.FC<{ open: boolean; onClose: () => void; title?: string } & R
 
 const SubmissionsDesktop: React.FC = () => {
   const { t } = useTranslation();
-  const { sorted, loading, retrying, refresh, onRetry, onDelete } = useSubmissionsContext();
+  const { sorted, retrying, refresh, onRetry, onDelete } = useSubmissionsContext();
   const [selected, setSelected] = useState<SubmissionEntry | null>(null);
 
   const handleDelete = async (id: string) => {
@@ -63,43 +60,15 @@ const SubmissionsDesktop: React.FC = () => {
     }
   };
 
+  // Trigger refresh when header action is used
+  useEffect(() => {
+    const handler = () => refresh();
+    window.addEventListener('submissions-refresh', handler as EventListener);
+    return () => window.removeEventListener('submissions-refresh', handler as EventListener);
+  }, [refresh]);
+
   return (
     <>
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 text-blue-600 hover:underline"
-            title={t('submissions.back')}
-          >
-            <FiArrowLeft />
-            <span>{t('submissions.back')}</span>
-          </Link>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-            {t('submissions.title')}
-          </h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link
-            to="/submissions"
-            className="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700"
-            title={t('submissions.desktopView')}
-          >
-            <FiSmartphone />
-            <span className="hidden sm:inline">{t('submissions.mobileView')}</span>
-          </Link>
-          <button
-            onClick={refresh}
-            disabled={loading}
-            className="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-md bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
-            title={t('submissions.refresh')}
-          >
-            <FiRefreshCcw />
-            <span className="hidden sm:inline">{t('submissions.refresh')}</span>
-          </button>
-        </div>
-      </div>
-
       {sorted.length === 0 ? (
         <div className="text-gray-700 dark:text-gray-300">{t('submissions.empty')}</div>
       ) : (

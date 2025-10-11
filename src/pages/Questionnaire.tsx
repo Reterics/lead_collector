@@ -518,8 +518,8 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
 
   return (
     <>
-      <div className="mb-6">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
+      <div className="mb-4">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
           {schema.name}
         </h2>
       </div>

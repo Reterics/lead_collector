@@ -2,9 +2,10 @@ import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { DBContext } from '../context/DBContext.ts';
 import type { CommonCollectionData } from '../services/firebase.tsx';
 import { firebaseCollections, firebaseModel } from '../config.ts';
-import { Link } from 'react-router-dom';
 import type { JiraConfig } from '../services/jira.ts';
 import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from '../components/LanguageSwitcher';
+import ThemeToggleButton from '../components/ThemeToggleButton';
 
 const Settings: React.FC = () => {
   const { t } = useTranslation();
@@ -19,8 +20,8 @@ const Settings: React.FC = () => {
   const [saved, setSaved] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Tab state: 'user' always available; 'list' and 'add' shown for admins
-  const [activeTab, setActiveTab] = useState<'user' | 'list' | 'add'>('user');
+  // Tab state: 'general' and 'user' always available; 'list' and 'add' shown for admins
+  const [activeTab, setActiveTab] = useState<'general' | 'user' | 'list' | 'add'>('user');
 
   const [newEmail, setNewEmail] = useState('');
   const [newName, setNewName] = useState('');
@@ -113,18 +114,22 @@ const Settings: React.FC = () => {
 
   return (
     <div className="max-w-3xl">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t('app.settings')}</h2>
-        <Link to="/" className="text-blue-600 hover:underline">&larr; {t('app.back')}</Link>
-      </div>
 
       {/* Tabs header */}
-      <div role="tablist" aria-label="Settings tabs" className="flex gap-2 border-b border-gray-200 dark:border-gray-700 mb-4 overflow-x-auto overflow-y-hidden">
+      <div role="tablist" aria-label="Settings tabs" className="flex gap-1 mb-4 overflow-x-auto overflow-y-hidden p-1 rounded-md border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-900/90 backdrop-blur supports-[backdrop-filter]:bg-white/70">
+        <button
+          role="tab"
+          aria-selected={activeTab === 'general'}
+          onClick={() => setActiveTab('general')}
+          className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-colors ${activeTab === 'general' ? 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800'}`}
+        >
+          {t('settings.tabs.general')}
+        </button>
         <button
           role="tab"
           aria-selected={activeTab === 'user'}
           onClick={() => setActiveTab('user')}
-          className={`px-3 py-2 text-sm rounded-t-md border-b-2 -mb-px ${activeTab === 'user' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'}`}
+          className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-colors ${activeTab === 'user' ? 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800'}`}
         >
           {t('settings.tabs.user') }
         </button>
@@ -134,7 +139,7 @@ const Settings: React.FC = () => {
               role="tab"
               aria-selected={activeTab === 'list'}
               onClick={() => setActiveTab('list')}
-              className={`px-3 py-2 text-sm rounded-t-md border-b-2 -mb-px ${activeTab === 'list' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'}`}
+              className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-colors ${activeTab === 'list' ? 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800'}`}
             >
               {t('settings.tabs.list') }
             </button>
@@ -142,7 +147,7 @@ const Settings: React.FC = () => {
               role="tab"
               aria-selected={activeTab === 'add'}
               onClick={() => setActiveTab('add')}
-              className={`px-3 py-2 text-sm rounded-t-md border-b-2 -mb-px ${activeTab === 'add' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'}`}
+              className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-colors ${activeTab === 'add' ? 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800'}`}
             >
               {t('settings.tabs.add') }
             </button>
@@ -151,6 +156,29 @@ const Settings: React.FC = () => {
       </div>
 
       {/* Tab panels */}
+      {activeTab === 'general' && (
+        <div role="tabpanel" className="space-y-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+            <div>
+              <h4 className="text-md font-medium text-gray-900 dark:text-white">{t('settings.general.language.title')}</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">{t('settings.general.language.desc')}</p>
+            </div>
+            <div className="flex sm:justify-end">
+              <LanguageSwitcher />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+            <div>
+              <h4 className="text-md font-medium text-gray-900 dark:text-white">{t('settings.general.theme.title')}</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">{t('settings.general.theme.desc')}</p>
+            </div>
+            <div className="flex sm:justify-end">
+              <ThemeToggleButton />
+            </div>
+          </div>
+        </div>
+      )}
+
       {activeTab === 'user' && (
         <div role="tabpanel" className="space-y-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-700">
           <div>

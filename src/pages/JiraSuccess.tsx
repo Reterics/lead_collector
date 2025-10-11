@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { normalizeJiraUrl } from "../utils/commons.ts";
 
@@ -10,8 +10,6 @@ export type JiraSuccessState = {
 };
 
 const JiraSuccess: React.FC = () => {
-  const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const { t } = useTranslation();
   const state = (location.state || {}) as JiraSuccessState;
@@ -20,7 +18,6 @@ const JiraSuccess: React.FC = () => {
   const issueUrl = normalizeJiraUrl(state.issueUrl, state.issueKey);
   const summary = state.summary;
 
-  const backTarget = id ? `/questionnaires/${id}` : '/';
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
@@ -55,13 +52,6 @@ const JiraSuccess: React.FC = () => {
       )}
 
       <div className="flex gap-3">
-        <button
-          type="button"
-          onClick={() => navigate(backTarget)}
-          className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800"
-        >
-          ← {t('app.back')}
-        </button>
         <Link
           to="/"
           className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white"

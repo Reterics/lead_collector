@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useParams, Link } from 'react-router-dom';
+import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 import Home from './pages/Home.tsx';
 import Settings from './pages/Settings.tsx';
 import Questionnaire from './pages/Questionnaire.tsx';
@@ -14,6 +14,7 @@ import PageLoading from './components/PageLoading.tsx';
 import { FirebaseProvider } from './services/firebase.tsx';
 import { ThemeProvider } from './context/ThemeContext.tsx';
 import Footer from './components/Footer.tsx';
+import Header from './components/Header.tsx';
 import { useTranslation } from 'react-i18next';
 import { JiraAuthProvider } from './context/JiraAuthContext.tsx';
 import Terms from './pages/Terms.tsx';
@@ -30,14 +31,9 @@ function QuestionnaireRoute() {
     return (
       <>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             {t('app.notFound')}
           </h2>
-          <div className="flex items-center gap-2">
-            <Link to="/" className="text-blue-600 hover:underline">
-              &larr; {t('app.back')}
-            </Link>
-          </div>
         </div>
         <p className="text-gray-700 dark:text-gray-300">
           {t('app.notFoundDesc', { id })}
@@ -47,11 +43,6 @@ function QuestionnaireRoute() {
   }
   return (
     <>
-      <div className="flex items-center justify-between mb-3">
-        <Link to="/" className="text-blue-600 hover:underline">
-          &larr; {t('app.back')}
-        </Link>
-      </div>
       <Questionnaire schema={schema} />
     </>
   );
@@ -72,8 +63,9 @@ function App() {
     <AuthProvider>
       <ThemeProvider>
         <JiraAuthProvider>
-        <section className="h-screen bg-gray-50 dark:bg-gray-900 pb-12">
-          <div className="h-full w-full mx-auto px-4 pt-6 overflow-y-auto">
+        <Header />
+        <section className="h-screen bg-gray-50 dark:bg-gray-900 pb-16">
+          <div className="h-full w-full mx-auto px-4 pt-20 overflow-y-auto">
             <Routes>
               <Route
                 path="/"

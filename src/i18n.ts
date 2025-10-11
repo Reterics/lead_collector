@@ -9,6 +9,7 @@ export const resources = {
         title: 'Lead Collector',
         back: 'Back',
         goHome: 'Go to Home',
+        home: 'Home',
         settings: 'Settings',
         notFound: 'Questionnaire not found',
         notFoundDesc: 'The requested questionnaire "{{id}}" does not exist.',
@@ -137,9 +138,20 @@ export const resources = {
       settings: {
         title: 'Settings',
         tabs: {
+          general: 'General',
           user: 'User settings',
           list: 'User list',
           add: 'Add user'
+        },
+        general: {
+          language: {
+            title: 'Language',
+            desc: 'Choose the app language.'
+          },
+          theme: {
+            title: 'Theme',
+            desc: 'Switch between light and dark theme.'
+          }
         },
         form: {
           jiraProjectKey: 'JIRA Project Key',
@@ -188,6 +200,7 @@ export const resources = {
         title: 'Lead Gyűjtő',
         back: 'Vissza',
         goHome: 'Ugrás a főoldalra',
+        home: 'Főoldal',
         settings: 'Beállítások',
         notFound: 'Kérdőív nem található',
         notFoundDesc: 'A kért kérdőív ("{{id}}") nem létezik.',
@@ -315,9 +328,20 @@ export const resources = {
       settings: {
         title: 'Beállítások',
         tabs: {
+          general: 'Általános',
           user: 'Felhasználói beállítások',
           list: 'Felhasználók listája',
           add: 'Felhasználó hozzáadása'
+        },
+        general: {
+          language: {
+            title: 'Nyelv',
+            desc: 'Válassza ki az alkalmazás nyelvét.'
+          },
+          theme: {
+            title: 'Téma',
+            desc: 'Váltás világos és sötét téma között.'
+          }
         },
         form: {
           jiraProjectKey: 'JIRA Projekt kulcs',

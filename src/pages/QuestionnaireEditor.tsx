@@ -1,9 +1,8 @@
 import { useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import type { QuestionnaireSchema, Question } from './Questionnaire';
 import { useQuestionnaireContext } from '../context/QuestionnaireContext';
 import {
-  FiChevronLeft,
   FiCopy,
   FiTrash2,
   FiPlus,
@@ -141,21 +140,6 @@ export default function QuestionnaireEditor() {
 
   return (
     <>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
-          {existing ? t('editor.headingEdit') : t('editor.headingCreate')}
-        </h2>
-        <div className="flex items-center gap-2">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 text-blue-600 hover:underline"
-            title={t('app.back')}
-          >
-            <FiChevronLeft />
-            <span>{t('app.back')}</span>
-          </Link>
-        </div>
-      </div>
 
       <div className="space-y-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
         <div>

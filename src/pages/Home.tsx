@@ -1,13 +1,10 @@
-import React, { useContext, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useQuestionnaireContext } from '../context/QuestionnaireContext.tsx';
-import { Link, useNavigate } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext.tsx';
+import { useNavigate } from 'react-router-dom';
 import {
-  FiUpload,
   FiDownload,
   FiTrash2,
   FiEdit,
-  FiLogOut,
   FiPlay,
 } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
@@ -15,7 +12,6 @@ import { useTranslation } from 'react-i18next';
 const Home: React.FC = () => {
   const { questionnaires, remove, getById, upsert } = useQuestionnaireContext();
   const navigate = useNavigate();
-  const { SignOut } = useContext(AuthContext);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { t } = useTranslation();
 
@@ -54,6 +50,14 @@ const Home: React.FC = () => {
   };
 
   const triggerImport = () => fileInputRef.current?.click();
+
+  useEffect(() => {
+    const handler = (_e: Event) => triggerImport();
+    window.addEventListener('open-import-dialog', handler as EventListener);
+    return () => {
+      window.removeEventListener('open-import-dialog', handler as EventListener);
+    };
+  }, []);
 
   const onImportFileChange: React.ChangeEventHandler<HTMLInputElement> = async (
     e,
@@ -126,61 +130,13 @@ const Home: React.FC = () => {
 
   return (
     <>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-          {t('home.choose')}
-        </h1>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => SignOut()}
-            className="inline-flex items-center gap-2 text-sm px-3 py-2 rounded-md bg-gray-600 text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-            title={t('auth.logout')}
-          >
-            <FiLogOut />
-            <span className="hidden sm:inline">{t('auth.logout')}</span>
-          </button>
-        </div>
-      </div>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Link
-            to="/questionnaires/new"
-            className="px-4 py-2 text-sm font-medium rounded-md bg-emerald-600 text-white hover:bg-emerald-700"
-          >
-            {t('home.new')}
-          </Link>
-          <Link
-            to="/submissions"
-            className="px-4 py-2 text-sm font-medium rounded-md bg-indigo-600 text-white hover:bg-indigo-700"
-          >
-            {t('home.submissions')}
-          </Link>
-          <Link
-            to="/settings"
-            className="px-4 py-2 text-sm font-medium rounded-md bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600"
-          >
-            {t('app.settings')}
-          </Link>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={triggerImport}
-            className="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-md bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
-            title="Import questionnaire JSON"
-            aria-label="Import"
-          >
-            <FiUpload />
-            <span className="hidden sm:inline">{t('home.importJson')}</span>
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="application/json,.json"
-            className="hidden"
-            onChange={onImportFileChange}
-          />
-        </div>
-      </div>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="application/json,.json"
+        className="hidden"
+        onChange={onImportFileChange}
+      />
       <div className="grid gap-4 sm:grid-cols-2">
         {questionnaires.map((q) => (
           <div
