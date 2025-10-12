@@ -296,6 +296,7 @@ export const resources = {
         status: {
           jira: 'JIRA létrehozva',
           local: 'Helyben tárolva',
+          firestore: 'Felhőben tárolva',
           auth: 'Hitelesítés szükséges',
           error: 'Hiba',
           unknown: 'Ismeretlen',

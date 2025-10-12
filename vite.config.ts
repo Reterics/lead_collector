@@ -8,10 +8,16 @@ export default defineConfig(({ mode }) => {
     base: mode === 'development' ? './' : (env.VITE_BASENAME || '/'),
     plugins: [react(), tailwindcss()],
     server: {
-        host: '0.0.0.0',
-        port: 5173,
+      host: '0.0.0.0',
+      port: 5173,
     },
-      publicDir: 'public',
-      assetsInclude: './src/assets/*.*',
+    publicDir: 'public',
+    assetsInclude: './src/assets/*.*',
+    build: {
+      rollupOptions: {
+        input: 'index.html',
+        external: ['**/*.php'],
+      },
+    }
   }
 })

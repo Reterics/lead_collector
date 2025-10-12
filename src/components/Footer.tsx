@@ -1,12 +1,8 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
-import { useJiraAuth } from '../context/JiraAuthContext.tsx';
 import { useTranslation } from 'react-i18next';
 
 const Footer: React.FC = () => {
-  const { user } = useContext(AuthContext);
-  const { status, message, loading, authUrl } = useJiraAuth();
   const { t } = useTranslation();
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
@@ -18,29 +14,10 @@ const Footer: React.FC = () => {
 
   return (
     <footer className="w-full border-t border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-900/90 backdrop-blur supports-[backdrop-filter]:bg-white/70 fixed bottom-0 left-0">
-      <div className="md:flex max-w-5xl mx-auto px-4 py-2 items-center justify-between gap-2 text-sm">
-        <div className="min-h-[28px] flex items-center">
-          {user ? (
-            loading ? (
-              <span className="text-gray-500">Checking JIRA connection…</span>
-            ) : status === 401 ? (
-              <a href={authUrl} className="inline-flex items-center px-2.5 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700">
-                Authenticate with JIRA
-              </a>
-            ) : message ? (
-              <span className="text-gray-700 dark:text-gray-300">{message}</span>
-            ) : null
-          ) : null}
-        </div>
-        <div className="flex items-center gap-2" />
-      </div>
-
-      {/* Android-like bottom navigation */}
       <nav aria-label="Bottom navigation" className="max-w-5xl mx-auto">
         <ul className="grid grid-cols-3">
           <li className="col-span-1">
             <NavLink to="/" className={navLinkClass} aria-label={t('app.home')}>
-              {/* Home icon */}
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6">
                 <path d="M12 3.172 2.293 12.88a1 1 0 1 0 1.414 1.414L5 13.001V20a2 2 0 0 0 2 2h3v-6h4v6h3a2 2 0 0 0 2-2v-6.999l1.293 1.293a1 1 0 0 0 1.414-1.414L12 3.172z" />
               </svg>

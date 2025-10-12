@@ -65,7 +65,7 @@ function App() {
         <JiraAuthProvider>
         <Header />
         <section className="h-screen bg-gray-50 dark:bg-gray-900 pb-16">
-          <div className="h-full w-full mx-auto px-4 pt-20 overflow-y-auto">
+          <div className="h-full w-full max-w-5xl mx-auto px-4 pt-20 pb-24 overflow-y-auto">
             <Routes>
               <Route
                 path="/"

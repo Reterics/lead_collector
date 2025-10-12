@@ -2,11 +2,14 @@ import React, { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AuthContext } from '../context/AuthContext.tsx';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FiLogOut, FiPlus, FiUpload, FiArrowLeft, FiEdit, FiRefreshCcw, FiMonitor } from 'react-icons/fi';
+import { FiLogOut, FiPlus, FiUpload, FiArrowLeft, FiEdit, FiRefreshCcw, FiMonitor, FiAlertTriangle } from 'react-icons/fi';
+import { useJiraAuth } from '../context/JiraAuthContext.tsx';
+import { SiJira } from 'react-icons/si';
 
 const Header: React.FC = () => {
   const { t } = useTranslation();
-  const { SignOut } = useContext(AuthContext);
+  const { user, SignOut } = useContext(AuthContext);
+  const { status, message, authUrl } = useJiraAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -34,7 +37,7 @@ const Header: React.FC = () => {
       <Link
         key="new"
         to="/questionnaires/new"
-        className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-md bg-emerald-600 text-white hover:bg-emerald-700"
+        className="inline-flex items-center gap-2 text-xs h-8 px-3 rounded-md bg-emerald-600 text-white hover:bg-emerald-700"
         aria-label={t('home.new')}
         title={t('home.new')}
       >
@@ -46,7 +49,7 @@ const Header: React.FC = () => {
       <button
         key="import"
         onClick={onImportFromHeader}
-        className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
+        className="inline-flex items-center gap-2 text-xs h-8 px-3 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
         aria-label={t('home.importJson')}
         title={t('home.importJson')}
       >
@@ -64,7 +67,7 @@ const Header: React.FC = () => {
         <Link
           key="edit"
           to={`/questionnaires/${id}/edit`}
-          className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
+          className="inline-flex items-center gap-2 text-xs h-8 px-3 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
           aria-label={t('home.edit')}
           title={t('home.edit')}
         >
@@ -85,7 +88,7 @@ const Header: React.FC = () => {
       <Link
         key="toggleView"
         to={toggleTo}
-        className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+        className="inline-flex items-center gap-2 text-xs h-8 px-3 rounded-md bg-blue-600 text-white hover:bg-blue-700"
         title={toggleLabel}
       >
         <FiMonitor className="h-4 w-4" />
@@ -97,7 +100,7 @@ const Header: React.FC = () => {
       <button
         key="refreshSubmissions"
         onClick={() => window.dispatchEvent(new CustomEvent('submissions-refresh'))}
-        className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
+        className="inline-flex items-center gap-2 text-xs h-8 px-3 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
         title={t('submissions.refresh')}
       >
         <FiRefreshCcw className="h-4 w-4" />
@@ -113,7 +116,7 @@ const Header: React.FC = () => {
           {showBack && (
             <button
               onClick={() => navigate(-1)}
-              className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="inline-flex items-center gap-2 text-xs h-8 px-3 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
               aria-label={t('app.back')}
               title={t('app.back')}
             >
@@ -133,9 +136,31 @@ const Header: React.FC = () => {
         </div>
         <div className="flex items-center gap-2">
           {actions}
+          {user ? (
+            status === 401 ? (
+              <a
+                href={authUrl}
+                className="inline-flex items-center justify-center h-8 px-3 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                title="Authenticate with JIRA"
+                aria-label="Authenticate with JIRA"
+              >
+                <SiJira className="h-4 w-4" />
+              </a>
+            ) : status === 202 ? null : (
+              status !== null && (
+                <span
+                  className="inline-flex items-center justify-center h-8 px-3 rounded-md bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
+                  title={message || 'JIRA connection issue'}
+                  aria-label={message || 'JIRA connection issue'}
+                >
+                  <FiAlertTriangle className="h-4 w-4" />
+                </span>
+              )
+            )
+          ) : null}
           <button
             onClick={() => SignOut()}
-            className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-md bg-gray-600 text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+            className="inline-flex items-center gap-2 text-xs h-8 px-3 rounded-md bg-gray-600 text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
             title={t('auth.logout')}
             aria-label={t('auth.logout')}
           >
