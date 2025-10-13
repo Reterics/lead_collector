@@ -128,6 +128,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                   email: user.email || undefined,
                   username: user.email || user.uid,
                   role: 'user',
+                  teamId: user.uid,
                 },
                 firebaseCollections.users,
               );

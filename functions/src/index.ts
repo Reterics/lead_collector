@@ -194,3 +194,24 @@ app.post("/transcribe/gcs", verifyFirebaseIdToken, async (req: Request, res: Res
 });
 
 export const api = functions.https.onRequest(app);
+
+// Create a user profile document on auth user creation (external sign-up)
+export const onAuthUserCreate = functions.auth.user().onCreate(async (user) => {
+  try {
+    const db = admin.firestore();
+    const docRef = db.collection('users').doc(user.uid);
+    const snap = await docRef.get();
+    if (snap.exists) return; // don't overwrite if exists
+
+    const teamId = user.uid; // each external signup gets their own team by default
+    await docRef.set({
+      email: user.email ?? null,
+      username: user.email ?? user.uid,
+      role: 'user',
+      teamId,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+  } catch (e) {
+    console.error('onAuthUserCreate failed:', e);
+  }
+});

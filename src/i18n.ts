@@ -25,7 +25,7 @@ export const resources = {
       },
       home: {
         choose: 'Choose a questionnaire',
-        new: '+ New questionnaire',
+        new: 'New questionnaire',
         submissions: 'Submissions',
         importJson: 'Import JSON',
         start: 'Start',
@@ -216,7 +216,7 @@ export const resources = {
       },
       home: {
         choose: 'Válasszon kérdőívet',
-        new: '+ Új kérdőív',
+        new: 'Új kérdőív',
         submissions: 'Beküldések',
         importJson: 'JSON importálása',
         start: 'Indítás',

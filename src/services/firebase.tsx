@@ -26,6 +26,7 @@ export interface UserData extends GeneralCollectionEntry {
   email?: string;
   role?: UserRole;
   id: string;
+  teamId?: string;
   password?: string;
   password_confirmation?: string;
   projectKey?: string;

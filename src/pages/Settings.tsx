@@ -84,6 +84,7 @@ const Settings: React.FC = () => {
         email,
         username,
         role: newRole,
+        teamId: currentUser?.teamId, // assign to admin's team by default
       };
 
       // Include temp password fields only if provided
@@ -181,6 +182,13 @@ const Settings: React.FC = () => {
 
       {activeTab === 'user' && (
         <div role="tabpanel" className="space-y-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Team ID</label>
+            <div className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white select-all break-all">
+              {currentUser?.teamId || '—'}
+            </div>
+            <p className="text-xs text-gray-500 mt-1">This is your team identifier. It’s used to group users. Only admins can change team membership.</p>
+          </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('settings.form.jiraProjectKey')}</label>
             <input value={projectKey} onChange={e=>setProjectKey(e.target.value)} placeholder={t('settings.form.placeholders.projectKey')} className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white" />

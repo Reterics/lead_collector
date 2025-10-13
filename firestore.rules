@@ -1,0 +1,119 @@
+// Firestore Security Rules
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Safer admin check: require auth, prefer custom claim, fallback to users/{uid}.role == 'admin' with exists() guard.
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.admin == true ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
+    }
+
+    function authEmail() {
+      return request.auth != null && request.auth.token.email != null
+        ? request.auth.token.email
+        : '';
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Questionnaires
+    match /questionnaires/{docId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Users
+    match /users/{userId} {
+
+      // Admins full access OR self can read (by uid or by email if present)
+      allow read: if isAdmin()
+        || (isSignedIn() && (
+             userId == request.auth.uid ||
+             (resource.data.email == authEmail() && authEmail() != '')
+           ));
+
+      // Admin creates users only within same team and consistent ID
+      allow create: if isAdmin()
+        && userId == request.resource.data.uid
+        && request.resource.data.teamId ==
+           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.teamId;
+
+      // Self update with whitelist, immutable role/teamId/email unless admin
+      function selfUpdatingOwnDoc() {
+        return isSignedIn() && (userId == request.auth.uid ||
+                                resource.data.email == authEmail());
+      }
+
+      // Helper to ensure fields are unchanged unless admin
+      function unchanged(field) {
+        return request.resource.data[field] == resource.data[field];
+      }
+
+      // Only allow these fields for self updates (adjust to your schema)
+      function onlySelfEditableFieldsChanged() {
+        // List of self-editable fields
+        let allowed = ['displayName', 'photoURL', 'preferences'];
+        // All keys in the new doc must be either unchanged or allowed
+        return request.resource.data.keys().hasOnly(allowed + resource.data.keys())
+          && (request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowed));
+      }
+
+      allow update: if isAdmin()
+        || ( selfUpdatingOwnDoc()
+             && unchanged('role')
+             && unchanged('teamId')
+             && unchanged('email') // keep email immutable for non-admins
+             && onlySelfEditableFieldsChanged()
+           );
+
+      allow delete: if isAdmin();
+    }
+
+    // Submissions
+    match /submissions/{docId} {
+
+      // Create: must own
+      allow create: if isSignedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        // Optional: stamp/validate fields
+        && request.resource.data.keys().hasAll(['ownerId'])
+        ;
+
+      // Read: owner or admin; also by email if present
+      allow read: if isAdmin()
+        || (isSignedIn() && resource.data.ownerId == request.auth.uid)
+        || (resource.data.ownerEmail == authEmail() && authEmail() != '');
+
+      // Update/Delete: owner or admin; keep ownership and server-set fields immutable
+      function submissionImmutablesUnchanged() {
+        // Add any other immutables you rely on: createdAt, teamId, etc.
+        return request.resource.data.ownerId == resource.data.ownerId
+          && (resource.data.ownerEmail == null ||
+              request.resource.data.ownerEmail == resource.data.ownerEmail)
+          && ( !('createdAt' in resource.data) ||
+               request.resource.data.createdAt == resource.data.createdAt );
+      }
+
+      allow update, delete: if isAdmin()
+        || (isSignedIn()
+            && resource.data.ownerId == request.auth.uid
+            && submissionImmutablesUnchanged());
+    }
+
+    // Recycle bin (admin only)
+    match /deleted/{docId} {
+      allow read, write: if isAdmin();
+    }
+  }
+}
