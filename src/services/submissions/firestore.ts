@@ -24,6 +24,8 @@ export interface BaseItem extends CommonCollectionData {
   imageUrls?: Record<string, string>
   ownerId?: string
   ownerEmail?: string
+  teamId?: string
+  sharedWithEmails?: string[]
 }
 
 export type Answers = Record<string, string | boolean>

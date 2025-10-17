@@ -35,6 +35,8 @@ export const SubmissionsProvider: React.FC<React.PropsWithChildren> = ({ childre
         issueUrl?: string;
         ownerId?: string;
         ownerEmail?: string;
+        teamId?: string;
+        sharedWithEmails?: string[];
       }>;
       // Map Firestore docs to SubmissionEntry and apply role-based filtering
       const currentUser = db?.data?.currentUser;
@@ -53,16 +55,22 @@ export const SubmissionsProvider: React.FC<React.PropsWithChildren> = ({ childre
         issueUrl: d.issueUrl,
         ownerId: d.ownerId,
         ownerEmail: d.ownerEmail,
+        teamId: d.teamId,
+        sharedWithEmails: Array.isArray(d.sharedWithEmails) ? d.sharedWithEmails : [],
       }));
 
       const local = loadSubmissions();
 
-      // For non-admins, show only owned Firestore submissions; admins see all
+      // For non-admins, show owned or shared-with (within same team) Firestore submissions; admins see all
+      const userTeamId = currentUser?.teamId || currentUser?.id;
       const visibleFs = isAdmin
         ? mapped
-        : mapped.filter(
-            (m) => (m.ownerId && userId && m.ownerId === userId) || (m.ownerEmail && userEmail && m.ownerEmail === userEmail)
-          );
+        : mapped.filter((m) => {
+            const isOwner = (m.ownerId && userId && m.ownerId === userId) || (m.ownerEmail && userEmail && m.ownerEmail === userEmail);
+            const isSharedToUser = Array.isArray(m.sharedWithEmails) && !!userEmail && m.sharedWithEmails.includes(userEmail);
+            const sameTeam = !!userTeamId && !!m.teamId && m.teamId === userTeamId;
+            return isOwner || (isSharedToUser && sameTeam);
+          });
 
       // Always include local submissions (assumed owned by current user context)
       const map = new Map<string, SubmissionEntry>();

@@ -11,6 +11,8 @@ export type SubmissionEntry = {
   issueUrl?: string;
   ownerId?: string;
   ownerEmail?: string;
+  teamId?: string;
+  sharedWithEmails?: string[];
 };
 
 const STORAGE_KEY = 'lead_collector_submissions';

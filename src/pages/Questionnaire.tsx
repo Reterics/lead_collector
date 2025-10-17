@@ -451,10 +451,12 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
     }
 
     const baseItem = createBaseItem(schema, values);
-    // Attach ownership for role-based access control
+    // Attach ownership and team for role-based access control
     if (db?.data?.currentUser) {
       baseItem.ownerId = db.data.currentUser.id;
       baseItem.ownerEmail = db.data.currentUser.email;
+      baseItem.teamId = db.data.currentUser.teamId || db.data.currentUser.id;
+      baseItem.sharedWithEmails = [];
     }
     const attachments: File[] = createAttachments(schema, recordings, images);
 

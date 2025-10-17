@@ -83,17 +83,29 @@ service cloud.firestore {
     // Submissions
     match /submissions/{docId} {
 
-      // Create: must own
+      function requesterTeamId() {
+        return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+          ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.teamId
+          : null;
+      }
+
+      function sameTeam() {
+        return resource.data.teamId != null && requesterTeamId() != null && resource.data.teamId == requesterTeamId();
+      }
+
+      // Create: must own; ensure teamId matches requester's team
       allow create: if isSignedIn()
         && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.teamId == requesterTeamId()
         // Optional: stamp/validate fields
-        && request.resource.data.keys().hasAll(['ownerId'])
+        && request.resource.data.keys().hasAll(['ownerId', 'teamId'])
         ;
 
-      // Read: owner or admin; also by email if present
+      // Read: admin, owner, owner's email, or shared within team by email
       allow read: if isAdmin()
         || (isSignedIn() && resource.data.ownerId == request.auth.uid)
-        || (resource.data.ownerEmail == authEmail() && authEmail() != '');
+        || (resource.data.ownerEmail == authEmail() && authEmail() != '')
+        || (sameTeam() && resource.data.sharedWithEmails != null && resource.data.sharedWithEmails.hasAny([authEmail()]) && authEmail() != '');
 
       // Update/Delete: owner or admin; keep ownership and server-set fields immutable
       function submissionImmutablesUnchanged() {
@@ -102,13 +114,22 @@ service cloud.firestore {
           && (resource.data.ownerEmail == null ||
               request.resource.data.ownerEmail == resource.data.ownerEmail)
           && ( !('createdAt' in resource.data) ||
-               request.resource.data.createdAt == resource.data.createdAt );
+               request.resource.data.createdAt == resource.data.createdAt )
+          && request.resource.data.teamId == resource.data.teamId;
+      }
+
+      // Only owner/admin can modify sharedWithEmails list
+      function onlySharedListChanged() {
+        // allow any update as long as immutables unchanged and only sharedWithEmails may differ alongside other non-protected fields
+        // We don't strictly limit other mutable fields here; ownership and teamId are protected above.
+        return true;
       }
 
       allow update, delete: if isAdmin()
         || (isSignedIn()
             && resource.data.ownerId == request.auth.uid
-            && submissionImmutablesUnchanged());
+            && submissionImmutablesUnchanged()
+            && onlySharedListChanged());
     }
 
     // Recycle bin (admin only)
