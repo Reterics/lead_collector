@@ -36,6 +36,27 @@ service cloud.firestore {
     // Users
     match /users/{userId} {
 
+      // 1) Self-onboarding: first time a signed-in user creates their own doc.
+      function selfOnboardingCreate() {
+        return isSignedIn()
+          && userId == request.auth.uid
+          && request.resource.data.id == request.auth.uid
+          && !exists(/databases/$(database)/documents/users/$(request.auth.uid))
+          // keep it minimal/safe on first write
+          && request.resource.data.keys().hasOnly([
+               'id', 'email', 'username', 'teamId'
+             ]);
+      }
+
+      // 2) Admin creates a user in the same team.
+      function adminSameTeamCreate() {
+        return isAdmin()
+          && userId == request.resource.data.uid
+          && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+          && request.resource.data.teamId ==
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.teamId;
+      }
+
       // Admins full access OR self can read (by uid or by email if present)
       allow read: if isAdmin()
         || (isSignedIn() && (
@@ -43,11 +64,7 @@ service cloud.firestore {
              (resource.data.email == authEmail() && authEmail() != '')
            ));
 
-      // Admin creates users only within same team and consistent ID
-      allow create: if isAdmin()
-        && userId == request.resource.data.uid
-        && request.resource.data.teamId ==
-           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.teamId;
+      allow create: if selfOnboardingCreate() || adminSameTeamCreate();
 
       // Self update with whitelist, immutable role/teamId/email unless admin
       function selfUpdatingOwnDoc() {

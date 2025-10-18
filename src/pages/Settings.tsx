@@ -1,15 +1,17 @@
-import React, { useContext, useEffect, useMemo, useState } from 'react';
-import { DBContext } from '../context/DBContext.ts';
-import type { CommonCollectionData } from '../services/firebase.tsx';
-import { firebaseCollections, firebaseModel } from '../config.ts';
-import type { JiraConfig } from '../services/jira.ts';
-import { useTranslation } from 'react-i18next';
+import React, {useContext, useEffect, useMemo, useState} from 'react';
+import {DBContext} from '../context/DBContext.ts';
+import type {CommonCollectionData} from '../services/firebase.tsx';
+import {firebaseCollections, firebaseModel} from '../config.ts';
+import type {JiraConfig} from '../services/jira.ts';
+import {useTranslation} from 'react-i18next';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import ThemeToggleButton from '../components/ThemeToggleButton';
+import {AuthContext} from "../context/AuthContext.tsx";
 
 const Settings: React.FC = () => {
   const { t } = useTranslation();
   const db = useContext(DBContext);
+  const { SignUp } = useContext(AuthContext);
   const currentUser = db?.data?.currentUser;
   const isAdmin = useMemo(() => currentUser?.role === 'admin', [currentUser?.role]);
 
@@ -73,31 +75,21 @@ const Settings: React.FC = () => {
       const email = newEmail.trim().toLowerCase();
       const username = newName.trim() || email;
       if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-        throw new Error(t('settings.addUser.validation.validEmailRequired'));
+        return setCreateErr(t('settings.addUser.validation.validEmailRequired'));
+      }
+      if (!newPassword) {
+        return setCreateErr(t('settings.addUser.validation.passwordRequired'));
       }
       if (newPassword && newPassword !== newPassword2) {
-        throw new Error(t('settings.addUser.validation.passwordsDoNotMatch'));
+        return setCreateErr(t('settings.addUser.validation.passwordsDoNotMatch'));
       }
 
-      // Create user document; FirebaseDBModel will auto-generate ID if not provided
-      const userDoc: Partial<CommonCollectionData> & { password?: string; password_confirmation?: string } = {
-        email,
-        username,
-        role: newRole,
-        teamId: currentUser?.teamId, // assign to admin's team by default
-      };
-
-      // Include temp password fields only if provided
-      if (newPassword) {
-        // Persist temporarily; provider sanitizes when listing
-        userDoc.password = newPassword;
-        userDoc.password_confirmation = newPassword2 || newPassword;
-      }
-
-      await firebaseModel.update(userDoc as CommonCollectionData, firebaseCollections.users);
-
-      // Refresh context so admin can see the new user right away
-      await db?.refreshData?.();
+      SignUp({
+        email: email,
+        password: newPassword,
+        displayName: username,
+        teamId: currentUser?.teamId
+      })
 
       setCreateMsg(t('settings.addUser.created'));
       // Reset form (do not keep passwords in memory)
@@ -116,7 +108,6 @@ const Settings: React.FC = () => {
   return (
     <div className="max-w-3xl">
 
-      {/* Tabs header */}
       <div role="tablist" aria-label="Settings tabs" className="flex gap-1 mb-4 overflow-x-auto overflow-y-hidden p-1 rounded-md border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-900/90 backdrop-blur supports-[backdrop-filter]:bg-white/70">
         <button
           role="tab"
@@ -156,7 +147,6 @@ const Settings: React.FC = () => {
         )}
       </div>
 
-      {/* Tab panels */}
       {activeTab === 'general' && (
         <div role="tabpanel" className="space-y-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-700">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">

@@ -15,6 +15,8 @@ export interface UserFormValues {
   email: string;
   password: string;
   displayName: string;
+  role?: "admin" | "manager" | "user";
+  teamId?: string;
 }
 
 //IAuth context

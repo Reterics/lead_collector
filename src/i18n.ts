@@ -376,7 +376,8 @@ export const resources = {
           createFailed: 'Felhasználó létrehozása sikertelen',
           validation: {
             validEmailRequired: 'Érvényes e-mail szükséges',
-            passwordsDoNotMatch: 'A jelszavak nem egyeznek'
+            passwordsDoNotMatch: 'A jelszavak nem egyeznek',
+            passwordRequired: 'Jelszó megadása kötelező'
           }
         },
         list: {

@@ -12,6 +12,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import PageLoading from '../components/PageLoading.tsx';
 import { FIREBASE_ERRORS } from './FirebaseErrors.ts';
 import ScreenMessage from '../components/ScreenMessage.tsx';
+import type {CommonCollectionData} from "../services/firebase.tsx";
 
 export const AuthContext = createContext<IAuth>({
   user: firebaseAuth?.currentUser,
@@ -42,20 +43,24 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setCurrentUser(user);
           try {
             // Create user profile doc with default role if it doesn't exist
+            const userEntry: CommonCollectionData = {
+              id: user.uid,
+              email: user.email || undefined,
+              username: user.email || user.uid,
+              teamId: credentials.teamId || (credentials.role === "admin" ? user.uid : ""),
+            }
+            if (credentials.role) {
+              userEntry.role = credentials.role;
+            }
             await firebaseModel.update(
-              {
-                id: user.uid,
-                email: user.email || undefined,
-                username: user.email || user.uid,
-                role: 'user',
-              },
+              userEntry,
               firebaseCollections.users,
             );
           } catch (e) {
             console.warn('Failed to create user profile doc:', e);
           }
           //redirect the user on the targeted route
-          navigate('/', { replace: true });
+          // navigate('/', { replace: true });
         } else {
           setTranslatedError('auth/user-not-found');
         }
