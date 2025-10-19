@@ -44,32 +44,28 @@ service cloud.firestore {
           && !exists(/databases/$(database)/documents/users/$(request.auth.uid))
           // keep it minimal/safe on first write
           && request.resource.data.keys().hasOnly([
-               'id', 'email', 'username', 'teamId'
+               'id', 'email', 'username', 'teamId', 'docUpdated', 'docType', 'docParent', 'deleted'
              ]);
       }
 
       // 2) Admin creates a user in the same team.
       function adminSameTeamCreate() {
         return isAdmin()
-          && userId == request.resource.data.uid
+          && userId == request.resource.data.id
           && exists(/databases/$(database)/documents/users/$(request.auth.uid))
           && request.resource.data.teamId ==
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.teamId;
       }
 
-      // Admins full access OR self can read (by uid or by email if present)
+      // Admins full access OR self can read (by uid)
       allow read: if isAdmin()
-        || (isSignedIn() && (
-             userId == request.auth.uid ||
-             (resource.data.email == authEmail() && authEmail() != '')
-           ));
+        || (isSignedIn() && userId == request.auth.uid);
 
       allow create: if selfOnboardingCreate() || adminSameTeamCreate();
 
       // Self update with whitelist, immutable role/teamId/email unless admin
       function selfUpdatingOwnDoc() {
-        return isSignedIn() && (userId == request.auth.uid ||
-                                resource.data.email == authEmail());
+        return isSignedIn() && userId == request.auth.uid;
       }
 
       // Helper to ensure fields are unchanged unless admin
@@ -80,7 +76,7 @@ service cloud.firestore {
       // Only allow these fields for self updates (adjust to your schema)
       function onlySelfEditableFieldsChanged() {
         // List of self-editable fields
-        let allowed = ['displayName', 'photoURL', 'preferences'];
+        let allowed = ['displayName', 'photoURL', 'preferences', 'id', 'email', 'username', 'teamId', 'docUpdated', 'docType', 'docParent', 'deleted'];
         // All keys in the new doc must be either unchanged or allowed
         return request.resource.data.keys().hasOnly(allowed + resource.data.keys())
           && (request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowed));
