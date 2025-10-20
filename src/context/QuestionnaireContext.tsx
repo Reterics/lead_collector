@@ -6,6 +6,10 @@ import type { ContextDataValueType } from '../services/firebase.tsx';
 export type QuestionnaireDef = QuestionnaireSchema & {
   id: string;
   description?: string;
+  ownerId?: string;
+  ownerEmail?: string;
+  teamId?: string;
+  sharedWithEmails?: string[];
 };
 
 type QuestionnaireContextValue = {
@@ -49,9 +53,15 @@ export function useQuestionnaireContext(): QuestionnaireContextValue {
       getById: (id: string) => all.find((q) => q.id === id),
       upsert: (q: QuestionnaireDef) => {
         // Fire-and-forget write to Firebase via DBContext
-        db?.setData('questionnaires', {
+        const currentUser = db?.data?.currentUser;
+        const stamped = {
           ...q,
-        } as unknown as ContextDataValueType).catch((e) =>
+          ownerId: q.ownerId || currentUser?.id,
+          ownerEmail: q.ownerEmail || currentUser?.email,
+          teamId: q.teamId || currentUser?.teamId || currentUser?.id,
+          sharedWithEmails: Array.isArray(q.sharedWithEmails) ? q.sharedWithEmails : [],
+        } as unknown as ContextDataValueType;
+        db?.setData('questionnaires', stamped).catch((e) =>
           console.error('Failed to save questionnaire', e),
         );
       },

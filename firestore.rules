@@ -27,10 +27,40 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // Questionnaires
+    // Questionnaires (shareable like submissions)
     match /questionnaires/{docId} {
-      allow read: if isSignedIn();
-      allow create, update, delete: if isAdmin();
+      function requesterTeamId() {
+        return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+          ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.teamId
+          : null;
+      }
+
+      function sameTeam() {
+        return resource.data.teamId != null && requesterTeamId() != null && resource.data.teamId == requesterTeamId();
+      }
+
+      // Create: must own; ensure teamId matches requester's team
+      allow create: if isSignedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.teamId == requesterTeamId()
+        && request.resource.data.keys().hasAll(['ownerId', 'teamId']);
+
+      // Read: admin, owner, owner's email, or shared within team by email
+      allow read: if isAdmin()
+        || (isSignedIn() && resource.data.ownerId == request.auth.uid)
+        || (resource.data.ownerEmail == authEmail() && authEmail() != '')
+        || (sameTeam() && resource.data.sharedWithEmails != null && resource.data.sharedWithEmails.hasAny([authEmail()]) && authEmail() != '');
+
+      // Update/Delete: owner or admin; keep ownership and server-set fields immutable
+      function questionnaireImmutablesUnchanged() {
+        return request.resource.data.ownerId == resource.data.ownerId
+          && (resource.data.ownerEmail == null || request.resource.data.ownerEmail == resource.data.ownerEmail)
+          && (!('createdAt' in resource.data) || request.resource.data.createdAt == resource.data.createdAt)
+          && request.resource.data.teamId == resource.data.teamId;
+      }
+
+      allow update, delete: if isAdmin()
+        || (isSignedIn() && resource.data.ownerId == request.auth.uid && questionnaireImmutablesUnchanged());
     }
 
     // Users

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuestionnaireContext } from '../context/QuestionnaireContext.tsx';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -6,14 +6,89 @@ import {
   FiTrash2,
   FiEdit,
   FiPlay,
+  FiShare2,
 } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
+import { DBContext } from '../context/DBContext.ts';
+import { firebaseModel } from '../config.ts';
 
 const Home: React.FC = () => {
   const { questionnaires, remove, getById, upsert } = useQuestionnaireContext();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { t } = useTranslation();
+
+  // Share modal state for questionnaires
+  const db = useContext(DBContext);
+  const currentUser = db?.data?.currentUser;
+  const userTeamId = useMemo(() => currentUser?.teamId || currentUser?.id, [currentUser?.teamId, currentUser?.id]);
+  const [shareForId, setShareForId] = useState<string | null>(null);
+  const [teamEmails, setTeamEmails] = useState<string[]>([]);
+  const [selectedEmails, setSelectedEmails] = useState<Record<string, boolean>>({});
+  const [loadingTeam, setLoadingTeam] = useState<boolean>(false);
+
+  const openShare = async (qId: string) => {
+    const q = getById(qId);
+    if (!q) return;
+    const isAdmin = currentUser?.role === 'admin';
+    const isOwner = (currentUser?.id && q.ownerId === currentUser.id) || (currentUser?.email && q.ownerEmail === currentUser.email);
+    if (!isAdmin && !isOwner) {
+      alert('You do not have permission to share this questionnaire.');
+      return;
+    }
+    setLoadingTeam(true);
+    try {
+      let users = Array.isArray(db?.data?.users) ? db!.data!.users : [];
+      if (!users || users.length <= 1) {
+        users = (await firebaseModel.getAll('users', true)) as unknown as Array<{ id: string; email?: string; teamId?: string }>; 
+      }
+      const ownerEmail = q.ownerEmail?.toLowerCase();
+      const emails = (users || [])
+        .filter((u) => u.email && (userTeamId ? u.teamId === userTeamId : true))
+        .map((u) => u.email!.toLowerCase())
+        .filter((e) => !!e && e !== ownerEmail);
+      const uniq = Array.from(new Set(emails)).sort();
+      setTeamEmails(uniq);
+      const preset: Record<string, boolean> = {};
+      (q.sharedWithEmails || []).forEach((e) => {
+        const lower = e.toLowerCase();
+        if (uniq.includes(lower)) preset[lower] = true;
+      });
+      setSelectedEmails(preset);
+      setShareForId(q.id);
+    } catch (e) {
+      console.error('Failed to load team emails', e);
+      alert('Failed to load team emails.');
+    } finally {
+      setLoadingTeam(false);
+    }
+  };
+
+  const closeShare = () => {
+    setShareForId(null);
+    setTeamEmails([]);
+    setSelectedEmails({});
+  };
+
+  const applyShare = async () => {
+    if (!shareForId) return;
+    const q = getById(shareForId);
+    if (!q) return;
+    const picked = Object.keys(selectedEmails).filter((k) => selectedEmails[k]);
+    try {
+      await firebaseModel.update({ id: q.id, sharedWithEmails: picked }, 'questionnaires');
+      // Refresh context data
+      await db?.refreshData('questionnaires');
+      closeShare();
+    } catch (e) {
+      console.error('Failed to update sharing', e);
+      alert('Failed to update sharing list.');
+    }
+  };
+
+  const toggleEmail = (email: string) => {
+    setSelectedEmails((prev) => ({ ...prev, [email]: !prev[email] }));
+  };
 
   const onDelete = (id: string) => {
     const q = getById(id);
@@ -147,9 +222,14 @@ const Home: React.FC = () => {
               {q.name}
             </h3>
             {q.description && (
-              <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">
                 {q.description}
               </p>
+            )}
+            {Array.isArray(q.sharedWithEmails) && q.sharedWithEmails.length > 0 && (
+              <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                Shared with: {q.sharedWithEmails.join(', ')}
+              </div>
             )}
             <div className="mt-auto pt-3 border-t border-gray-100 dark:border-gray-700/60 flex gap-2 flex-nowrap items-center">
               <button
@@ -161,6 +241,13 @@ const Home: React.FC = () => {
                 <span>{t('home.start')}</span>
               </button>
               <div className="inline-flex flex-1"></div>
+              <button
+                onClick={() => openShare(q.id)}
+                className="inline-flex items-center gap-2 px-4 py-3 text-sm font-medium cursor-pointer rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                title={t('submissions.share') || 'Share by email within team'}
+              >
+                <FiShare2 />
+              </button>
               <button
                 onClick={() => navigate(`/questionnaires/${q.id}/edit`)}
                 className="inline-flex items-center gap-2 px-4 py-3 text-sm font-medium cursor-pointer rounded-md bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -186,6 +273,47 @@ const Home: React.FC = () => {
           </div>
         ))}
       </div>
+
+      {shareForId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={closeShare} />
+          <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-lg p-5 w-full max-w-md border border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Select teammates to share with</h3>
+            {loadingTeam ? (
+              <div className="text-sm text-gray-600 dark:text-gray-300">Loading team members...</div>
+            ) : teamEmails.length === 0 ? (
+              <div className="text-sm text-gray-600 dark:text-gray-300">No teammates found in your team.</div>
+            ) : (
+              <ul className="max-h-60 overflow-auto divide-y divide-gray-200 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded">
+                {teamEmails.map((email) => (
+                  <li key={email} className="flex items-center justify-between px-3 py-2 bg-white dark:bg-gray-800">
+                    <span className="text-sm text-gray-800 dark:text-gray-200">{email}</span>
+                    <input
+                      type="checkbox"
+                      checked={!!selectedEmails[email]}
+                      onChange={() => toggleEmail(email)}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                onClick={closeShare}
+                className="px-3 py-2 text-sm rounded bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={applyShare}
+                className="px-3 py-2 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
