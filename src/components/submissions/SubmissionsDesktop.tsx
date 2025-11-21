@@ -101,17 +101,14 @@ const SubmissionsDesktop: React.FC = () => {
                     <div className="flex items-center justify-end gap-2">
                       <button onClick={() => setSelected(s)} className="inline-flex items-center gap-2 px-3 py-1.5 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700" title={t('submissions.open') as string}>
                         <FiEye />
-                        <span className="hidden lg:inline">{t('submissions.open')}</span>
                       </button>
                       {(s.status === 'local' || s.status === 'created') && (
                         <button onClick={() => onRetry(s)} disabled={!!retrying[s.id]} className="inline-flex items-center gap-2 px-3 py-1.5 text-sm rounded-md bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-60" title={t('submissions.retry')}>
                           <FiRefreshCcw />
-                          <span className="hidden lg:inline">{(retrying[s.id] ? t('submissions.retrying') : t('submissions.retry')) as string}</span>
                         </button>
                       )}
                       <button onClick={() => handleDelete(s.id)} className="inline-flex items-center gap-2 px-3 py-1.5 text-sm rounded-md bg-red-600 text-white hover:bg-red-700" title={t('submissions.delete')}>
                         <FiTrash2 />
-                        <span className="hidden lg:inline">{t('submissions.delete')}</span>
                       </button>
                     </div>
                   </td>
@@ -154,10 +151,10 @@ const SubmissionsDesktop: React.FC = () => {
                 </button>
               )}
               <button onClick={() => { handleDelete(selected.id); setSelected(null); }} className="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-md bg-red-600 text-white hover:bg-red-700">
-                <FiTrash2 /> {t('submissions.delete')}
+                <FiTrash2 />
               </button>
               <button onClick={() => setSelected(null)} className="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-md bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white">
-                <FiX /> {t('submissions.close')}
+                <FiX />
               </button>
             </div>
           </div>

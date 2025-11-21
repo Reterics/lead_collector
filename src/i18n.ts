@@ -330,9 +330,9 @@ export const resources = {
         title: 'Beállítások',
         tabs: {
           general: 'Általános',
-          user: 'Felhasználói beállítások',
-          list: 'Felhasználók listája',
-          add: 'Felhasználó hozzáadása'
+          user: 'Integrációk',
+          list: 'Felhasználók',
+          add: 'Regisztráció'
         },
         general: {
           language: {
