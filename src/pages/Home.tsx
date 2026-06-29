@@ -33,7 +33,7 @@ const Home: React.FC = () => {
     const isAdmin = currentUser?.role === 'admin';
     const isOwner = (currentUser?.id && q.ownerId === currentUser.id) || (currentUser?.email && q.ownerEmail === currentUser.email);
     if (!isAdmin && !isOwner) {
-      alert('You do not have permission to share this questionnaire.');
+      alert(t('sharing.permissionQuestionnaire'));
       return;
     }
     setLoadingTeam(true);
@@ -58,7 +58,7 @@ const Home: React.FC = () => {
       setShareForId(q.id);
     } catch (e) {
       console.error('Failed to load team emails', e);
-      alert('Failed to load team emails.');
+      alert(t('sharing.loadError'));
     } finally {
       setLoadingTeam(false);
     }
@@ -82,7 +82,7 @@ const Home: React.FC = () => {
       closeShare();
     } catch (e) {
       console.error('Failed to update sharing', e);
-      alert('Failed to update sharing list.');
+      alert(t('sharing.updateError'));
     }
   };
 
@@ -228,7 +228,7 @@ const Home: React.FC = () => {
             )}
             {Array.isArray(q.sharedWithEmails) && q.sharedWithEmails.length > 0 && (
               <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
-                Shared with: {q.sharedWithEmails.join(', ')}
+                {t('sharing.sharedWith', { emails: q.sharedWithEmails.join(', ') })}
               </div>
             )}
             <div className="mt-auto pt-3 border-t border-gray-100 dark:border-gray-700/60 flex gap-2 flex-nowrap items-center">
@@ -244,7 +244,7 @@ const Home: React.FC = () => {
               <button
                 onClick={() => openShare(q.id)}
                 className="inline-flex items-center gap-2 px-4 py-3 text-sm font-medium cursor-pointer rounded-md bg-blue-600 text-white hover:bg-blue-700"
-                title={t('submissions.share') || 'Share by email within team'}
+                title={t('submissions.share')}
               >
                 <FiShare2 />
               </button>
@@ -278,11 +278,17 @@ const Home: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/50" onClick={closeShare} />
           <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-lg p-5 w-full max-w-md border border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Select teammates to share with</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+              {t('sharing.selectTeammates')}
+            </h3>
             {loadingTeam ? (
-              <div className="text-sm text-gray-600 dark:text-gray-300">Loading team members...</div>
+              <div className="text-sm text-gray-600 dark:text-gray-300">
+                {t('sharing.loadingTeamMembers')}
+              </div>
             ) : teamEmails.length === 0 ? (
-              <div className="text-sm text-gray-600 dark:text-gray-300">No teammates found in your team.</div>
+              <div className="text-sm text-gray-600 dark:text-gray-300">
+                {t('sharing.noTeammates')}
+              </div>
             ) : (
               <ul className="max-h-60 overflow-auto divide-y divide-gray-200 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded">
                 {teamEmails.map((email) => (
@@ -302,13 +308,13 @@ const Home: React.FC = () => {
                 onClick={closeShare}
                 className="px-3 py-2 text-sm rounded bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
               >
-                Cancel
+                {t('sharing.cancel')}
               </button>
               <button
                 onClick={applyShare}
                 className="px-3 py-2 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
               >
-                Apply
+                {t('sharing.save')}
               </button>
             </div>
           </div>

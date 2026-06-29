@@ -84,7 +84,13 @@ export const resources = {
         remove: 'Remove',
         use_camera: 'Use camera',
         upload_from_device: 'Upload from device',
-        retake_camera: 'Retake (camera)'
+        retake_camera: 'Retake (camera)',
+        no_mics: 'No microphones found',
+        unknown_mic: 'Microphone',
+        refresh_mics: 'Refresh microphones',
+        upload_image: 'Upload image',
+        more_options: 'More options',
+        send_options: 'Send options',
       },
       submissions: {
         title: 'Submissions',
@@ -112,10 +118,23 @@ export const resources = {
         },
         openInJira: 'Open in JIRA',
         details: 'Details',
+        share: 'Share',
         delete: 'Delete',
         confirmDelete: 'Delete this submission record?',
         desktopView: 'Desktop view',
         mobileView: 'Mobile view',
+      },
+      sharing: {
+        sharedWith: 'Shared with: {{emails}}',
+        selectTeammates: 'Select teammates to share with',
+        loadingTeamMembers: 'Loading team members...',
+        noTeammates: 'No teammates found in your team.',
+        cancel: 'Cancel',
+        save: 'Save',
+        permissionSubmission: 'You do not have permission to share this submission.',
+        permissionQuestionnaire: 'You do not have permission to share this questionnaire.',
+        loadError: 'Failed to load team members.',
+        updateError: 'Failed to update sharing list.',
       },
       terms: {
         title: 'Terms and Conditions',
@@ -185,7 +204,8 @@ export const resources = {
           createFailed: 'User creation failed',
           validation: {
             validEmailRequired: 'Valid email is required',
-            passwordsDoNotMatch: 'Passwords do not match'
+            passwordsDoNotMatch: 'Passwords do not match',
+            passwordRequired: 'Password is required',
           }
         },
         list: {
@@ -275,7 +295,13 @@ export const resources = {
         remove: 'Eltávolítás',
         use_camera: 'Kamera használata',
         upload_from_device: 'Feltöltés eszközről',
-        retake_camera: 'Újrafotózás (kamera)'
+        retake_camera: 'Újrafotózás (kamera)',
+        no_mics: 'Nem található mikrofon',
+        unknown_mic: 'Mikrofon',
+        refresh_mics: 'Mikrofonok frissítése',
+        upload_image: 'Kép feltöltése',
+        more_options: 'További lehetőségek',
+        send_options: 'Küldési lehetőségek',
       },
       submissions: {
         title: 'Beküldések',
@@ -303,10 +329,23 @@ export const resources = {
         },
         openInJira: 'Megnyitás JIRA-ban',
         details: 'Részletek',
+        share: 'Megosztás',
         delete: 'Törlés',
         confirmDelete: 'Törli ezt a beküldési rekordot?',
         desktopView: 'Asztali nézet',
         mobileView: 'Mobil nézet',
+      },
+      sharing: {
+        sharedWith: 'Megosztva velük: {{emails}}',
+        selectTeammates: 'Válassza ki, kikkel szeretné megosztani',
+        loadingTeamMembers: 'Csapattagok betöltése...',
+        noTeammates: 'Nem található másik csapattag.',
+        cancel: 'Mégse',
+        save: 'Mentés',
+        permissionSubmission: 'Nincs jogosultsága a beküldés megosztásához.',
+        permissionQuestionnaire: 'Nincs jogosultsága a kérdőív megosztásához.',
+        loadError: 'Nem sikerült betölteni a csapattagokat.',
+        updateError: 'Nem sikerült frissíteni a megosztási listát.',
       },
       terms: {
         title: 'Felhasználási feltételek',

@@ -48,7 +48,7 @@ const SubmissionsList: React.FC = () => {
     const isAdmin = currentUser?.role === 'admin';
     const isOwner = (currentUser?.id && s.ownerId === currentUser.id) || (currentUser?.email && s.ownerEmail === currentUser.email);
     if (!isAdmin && !isOwner) {
-      alert('You do not have permission to share this submission.');
+      alert(t('sharing.permissionSubmission'));
       return;
     }
     setLoadingTeam(true);
@@ -75,7 +75,7 @@ const SubmissionsList: React.FC = () => {
       setShareForId(s.id);
     } catch (e) {
       console.error('Failed to load team emails', e);
-      alert('Failed to load team emails.');
+      alert(t('sharing.loadError'));
     } finally {
       setLoadingTeam(false);
     }
@@ -98,7 +98,7 @@ const SubmissionsList: React.FC = () => {
       closeShare();
     } catch (e) {
       console.error('Failed to update sharing', e);
-      alert('Failed to update sharing list.');
+      alert(t('sharing.updateError'));
     }
   };
 
@@ -179,7 +179,7 @@ const SubmissionsList: React.FC = () => {
                   </details>
                   {Array.isArray(s.sharedWithEmails) && s.sharedWithEmails.length > 0 && (
                     <div className="mt-2 text-xs text-gray-600 dark:text-gray-400">
-                      Shared with: {s.sharedWithEmails.join(', ')}
+                      {t('sharing.sharedWith', { emails: s.sharedWithEmails.join(', ') })}
                     </div>
                   )}
                 </div>
@@ -187,11 +187,11 @@ const SubmissionsList: React.FC = () => {
                   <button
                     onClick={() => openShare(s.id)}
                     className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700"
-                    title={t('submissions.share') || 'Share by email within team'}
+                    title={t('submissions.share')}
                   >
                     <FiShare2 />
                     <span className="hidden sm:inline">
-                      {t('submissions.share') || 'Share'}
+                      {t('submissions.share')}
                     </span>
                   </button>
                   {(s.status === 'local' || s.status === 'created') && (
@@ -228,11 +228,17 @@ const SubmissionsList: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/50" onClick={closeShare} />
           <div className="relative z-10 w-full max-w-md rounded-lg bg-white dark:bg-gray-800 shadow-xl p-5">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Select teammates to share with</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+              {t('sharing.selectTeammates')}
+            </h3>
             {loadingTeam ? (
-              <div className="text-sm text-gray-600 dark:text-gray-300">Loading team emails...</div>
+              <div className="text-sm text-gray-600 dark:text-gray-300">
+                {t('sharing.loadingTeamMembers')}
+              </div>
             ) : teamEmails.length === 0 ? (
-              <div className="text-sm text-gray-600 dark:text-gray-300">No teammates found for your team.</div>
+              <div className="text-sm text-gray-600 dark:text-gray-300">
+                {t('sharing.noTeammates')}
+              </div>
             ) : (
               <div className="max-h-64 overflow-auto border border-gray-200 dark:border-gray-700 rounded-md p-2 space-y-1">
                 {teamEmails.map((email) => (
@@ -253,14 +259,14 @@ const SubmissionsList: React.FC = () => {
                 onClick={closeShare}
                 className="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
               >
-                Cancel
+                {t('sharing.cancel')}
               </button>
               <button
                 onClick={applyShare}
                 disabled={loadingTeam}
                 className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60"
               >
-                Save
+                {t('sharing.save')}
               </button>
             </div>
           </div>

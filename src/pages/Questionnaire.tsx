@@ -169,19 +169,19 @@ const TextareaWithRecorder: React.FC<{
         >
           {voice.devices.length === 0 && (
             <option value="">
-              {t('questionnaire.no_mics') || 'No microphones found'}
+              {t('questionnaire.no_mics')}
             </option>
           )}
           {voice.devices.map((d) => (
             <option key={d.deviceId} value={d.deviceId}>
-              {d.label || t('questionnaire.unknown_mic') || 'Microphone'}
+              {d.label || t('questionnaire.unknown_mic')}
             </option>
           ))}
         </select>
         <button
           type="button"
           onClick={voice.refreshDevices}
-          title={t('questionnaire.refresh_mics') || 'Refresh microphones'}
+          title={t('questionnaire.refresh_mics')}
           className="px-2 py-1 text-xs rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
         >
           ⟳
@@ -642,7 +642,7 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
                         {t('questionnaire.use_camera') || 'Use camera'}
                       </button>
                       <label className="inline-block">
-                        <span className="sr-only">{t('questionnaire.upload_image') || 'Upload image'}</span>
+                        <span className="sr-only">{t('questionnaire.upload_image')}</span>
                         <input
                           type="file"
                           accept="image/*"
@@ -726,7 +726,7 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
               disabled={submitting}
               onClick={toggleMenu}
               className="px-3 py-2.5 rounded-r-md rounded-l-none border-l border-blue-500 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              title={t('questionnaire.more_options') || 'More options'}
+              title={t('questionnaire.more_options')}
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
                 <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.108l3.71-3.878a.75.75 0 111.08 1.04l-4.24 4.432a.75.75 0 01-1.08 0L5.25 8.27a.75.75 0 01-.02-1.06z" clipRule="evenodd" />
@@ -736,7 +736,7 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ schema }) => {
             {menuOpen && (
               <div
                 role="menu"
-                aria-label={t('questionnaire.send_options') || 'Send options'}
+                aria-label={t('questionnaire.send_options')}
                 className={`absolute z-20 right-0 ${menuOpenUp ? 'bottom-full mb-2' : 'top-full mt-2'} w-56 overflow-hidden rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg`}
               >
                 <div className="py-1">
